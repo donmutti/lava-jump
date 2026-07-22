@@ -159,19 +159,24 @@ Created by `createPlayer(x, y)` (in `entities/player.js`):
 
 | State | Meaning | Enter via | Exit to |
 | --- | --- | --- | --- |
-| `ready` | Title overlay shown, awaiting input | `fullRestart()` | `levelIntro` on movement key |
-| `levelIntro` | Level-intro overlay (level number + name), awaiting input | `startPlayingIfNeeded()` (from `ready`) / `advanceLevel()` | `playing` on any movement/jump key |
-| `playing` | Simulation running, timer accruing | dismissing the level-intro overlay / `resetPlayer()` | `respawning` / `levelIntro` / `won` |
+| `intro` | Opening cutscene (letterboxed), backstory of the abduction | `fullRestart()` | `levelIntro` when the cutscene finishes or is skipped |
+| `levelIntro` | Level-intro overlay (level number + name), awaiting input | intro cutscene finishing / `advanceLevel()` | `playing` on any movement/jump key |
+| `playing` | Simulation running, timer accruing | dismissing the level-intro overlay / `resetPlayer()` | `respawning` / `levelIntro` / `ending` |
 | `respawning` | Death overlay, persists until dismissed | `triggerDeath()` | `playing` via `resetPlayer()` on any dismiss key |
-| `won` | Victory overlay (only after the final level) | last-level goal overlap | `ready` via restart |
+| `ending` | Closing cutscene (letterboxed), the happy return home | final-level goal overlap | `won` when the cutscene finishes or is skipped |
+| `won` | Victory overlay (only after the ending cutscene) | ending cutscene finishing | `ready` via restart |
 
 Tracked stats: `timer` (seconds), `deaths` (respawn count), `levelIndex`.
 
-Each level begins with a **level-intro screen** (`levelIntro` state): an overlay showing the level position and name (e.g. "Level 1/5: Sunny Meadow"), which waits for a movement/jump keypress before entering `playing`. The world is rendered behind the overlay but the simulation and timer are paused until dismissed. This applies to the first level (after the title) and to every subsequent level reached via `advanceLevel()`.
+Each level begins with a **level-intro screen** (`levelIntro` state): an overlay showing the level position and name (e.g. "Level 1/5: Sunny Meadow"), which waits for a movement/jump keypress before entering `playing`. The world is rendered behind the overlay but the simulation and timer are paused until dismissed. This applies to the first level (reached when the intro cutscene finishes) and to every subsequent level reached via `advanceLevel()`.
 
 Reaching a non-final level's goal does **not** enter `won`; it advances to the next level (see §6.2) and shows that level's intro screen (`levelIntro`). Only clearing the final level enters `won`.
 
 `triggerDeath()` increments deaths and shows the "Ouch." overlay. The death overlay **persists until the player presses a key** (it does not auto-dismiss on a timer), so the player has time to read it. Any movement/jump key resumes play by calling `resetPlayer()`, which respawns at the current level's `start`.
+
+### 8.1 Cutscenes
+
+Two scripted, time-driven cutscenes bracket the game: an `intro` (played once at `fullRestart`, before the first level) and an `ending` (played after clearing the final level, before the `won` overlay). Both are letterboxed — black cinematic bars at the top and bottom of the canvas — and both advance on elapsed time (`dt`), not the simulation. `game.cutscene` holds `{ name, t }` where `name` is `'intro' | 'ending'` and `t` is seconds elapsed. When `t` reaches the cutscene's duration, or the player presses any key, the cutscene finishes and hands off to the next state (`intro` → `levelIntro` for level 1, `ending` → `won`). There is no separate title screen; the intro cutscene serves as the opening. The overlay DOM is hidden during cutscenes; everything is drawn on the canvas by `render/cutscene.js`. The narrative content (chicken, cow, UFO abduction, sunset homecoming) is layered on later; the scaffold renders only the letterbox bars.
 
 ---
 
@@ -189,7 +194,7 @@ Keyboard-driven, handled by `handleKeyChange`:
 | `Enter` | Restart + start (when not playing) |
 
 - Movement/jump keys call `preventDefault` to avoid page scroll.
-- Any movement key while `ready` starts the game.
+- Any key while a cutscene is playing skips it.
 - Any movement/jump key while `respawning` dismisses the death overlay and respawns the player (the overlay otherwise waits indefinitely).
 - `pointerdown` on the canvas starts the game and focuses it (no pointer-based movement).
 
@@ -275,3 +280,4 @@ Ideas captured for later; not yet specified or scheduled.
 
 - **Collectible items granting a super jump**: apples, cakes, and similar edibles scattered sparsely across the levels (2–3 per level). Collecting one grants a single super jump — a double-jump that lets the player jump again while already airborne (one extra jump per item collected).
 - **Rename `package.json` `name` from `lava-leap` to `lava-jump`**: align the npm identifier with the rebranded product name and repo directory. Currently kept as `lava-leap` (see the note under §1's title); revisit whether the package id should follow the rename.
+- **Remove the `S` / `↓` fast-fall action**: drop the fast-fall input and its `fastFallGravityScale` physics; simplify controls to move + jump only. Requires updating §9 (input table), the physics gravity scaling, the instructions line in `index.html`, and the fast-fall foreground hint.

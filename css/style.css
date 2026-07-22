@@ -160,22 +160,9 @@ body {
   display: grid;
 }
 
-/* Reserve the full frame footprint before buildScene populates #game-root, so
-   the page never reflows and the title never flashes through on load. The empty
-   root becomes a grid column: a HUD strip (one pill row: line-height plus
-   padding and border), the 12px frame gap, and a 16:9 canvas box sized from its
-   own width. Font-relative — no magic pixel height — so it holds at any
-   viewport, font size, or zoom. */
-.game-root:empty {
-  gap: 12px;
-}
-
-.game-root:empty::before {
-  content: "";
-  display: block;
-  height: calc(0.95rem * 1.4 + 16px);
-}
-
+/* Reserve the frame footprint before buildScene populates #game-root, so the
+   page never reflows on load. The HUD now overlays the canvas, so the empty
+   root reserves only the 16:9 canvas box sized from its own width. */
 .game-root:empty::after {
   content: "";
   display: block;
@@ -186,30 +173,46 @@ body {
 
 .game-frame {
   display: grid;
-  gap: 12px;
 }
 
+/* HUD overlays the top of the canvas. */
 .hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   justify-content: space-between;
   align-items: center;
+  padding: 12px 14px;
   font-size: 0.95rem;
-  color: var(--muted);
+  color: var(--text);
+  pointer-events: none;
 }
 
 .hud-stats {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  transform: translateY(-260%);
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.hud.hud-enter .hud-stats {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .hud-pill {
   padding: 7px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(10, 12, 26, 0.55);
+  backdrop-filter: blur(6px);
 }
 
 .canvas-shell {

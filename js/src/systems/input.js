@@ -1,4 +1,4 @@
-import { resetPlayer, fullRestart, showLevelIntro, startPlaying } from './lifecycle';
+import { resetPlayer, fullRestart, startPlaying, finishCutscene } from './lifecycle';
 
 export function attachInput(ctx) {
   const { scene } = ctx;
@@ -7,17 +7,18 @@ export function attachInput(ctx) {
   window.addEventListener('keyup', (event) => handleKeyChange(ctx, event, false));
 
   scene.canvas.addEventListener('pointerdown', () => {
-    startPlayingIfNeeded(ctx);
+    if (ctx.game.cutscene) {
+      finishCutscene(ctx);
+    } else {
+      startPlayingIfNeeded(ctx);
+    }
     scene.canvas.focus();
   });
 }
 
 function startPlayingIfNeeded(ctx) {
   const { game } = ctx;
-  if (game.state === 'ready') {
-    showLevelIntro(ctx);
-    ctx.scene.canvas.focus();
-  } else if (game.state === 'levelIntro') {
+  if (game.state === 'levelIntro') {
     startPlaying(ctx);
   }
 }
@@ -33,6 +34,11 @@ function handleKeyChange(ctx, event, pressed) {
 
   if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright', ' '].includes(key)) {
     event.preventDefault();
+  }
+
+  if (pressed && game.cutscene && !event.repeat) {
+    finishCutscene(ctx);
+    return;
   }
 
   if (pressed && ['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright'].includes(key)) {

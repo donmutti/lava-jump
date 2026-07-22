@@ -23,5 +23,6 @@ export function createGame(now) {
     message: 'Press A/D to move and W to jump.',
     overlayVisible: true,
     lavaPhase: 0,
+    cutscene: null,
   };
 }

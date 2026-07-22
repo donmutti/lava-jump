@@ -47,8 +47,8 @@ export function buildScene(root) {
 
   overlayCard.append(overlayTitle, overlayMessage);
   overlay.append(overlayCard);
-  canvasShell.append(canvas, overlay);
-  frame.append(hud, canvasShell);
+  canvasShell.append(canvas, hud, overlay);
+  frame.append(canvasShell);
   root.append(frame);
 
   const ctx = canvas.getContext('2d');
@@ -65,6 +65,7 @@ export function buildScene(root) {
     overlay,
     overlayTitle,
     overlayMessage,
+    hud,
     levelStat,
     timeStat,
   };

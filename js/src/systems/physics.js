@@ -1,11 +1,10 @@
 import { PHYSICS, WORLD_WIDTH, WORLD_HEIGHT } from '../config/constants';
 import { LEVELS } from '../config/level';
 import { clamp, rectsOverlap, rangesOverlap, getPlayerRect } from '../core/math';
-import { setOverlay } from '../dom/overlay';
-import { triggerDeath, advanceLevel } from './lifecycle';
+import { triggerDeath, advanceLevel, startCutscene } from './lifecycle';
 
 export function updatePlayer(ctx, dt) {
-  const { game, input, scene } = ctx;
+  const { game, input } = ctx;
   const level = LEVELS[game.levelIndex];
   const player = game.player;
   const direction = Number(input.right) - Number(input.left);
@@ -75,9 +74,7 @@ export function updatePlayer(ctx, dt) {
     if (game.levelIndex < LEVELS.length - 1) {
       advanceLevel(ctx);
     } else {
-      game.state = 'won';
-      game.message = `You cleared all ${LEVELS.length} levels in ${game.timer.toFixed(1)}s with ${game.deaths} respawns.`;
-      setOverlay(scene, game, 'You made it!', `${game.message} Press R to play again.`, true);
+      startCutscene(ctx, 'ending');
     }
     return;
   }

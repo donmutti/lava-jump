@@ -1,5 +1,6 @@
 import {updatePlayer} from './systems/physics';
 import {updateCamera} from './systems/camera';
+import {advanceCutscene} from './systems/lifecycle';
 import {updateHud} from './dom/hud';
 import {render} from './render';
 
@@ -11,13 +12,17 @@ export function startLoop(ctx) {
     game.lastFrame = now;
     game.lavaPhase += dt;
 
-    if (game.state === 'playing') {
+    if (game.cutscene) {
+      advanceCutscene(ctx, dt);
+    } else if (game.state === 'playing') {
       game.timer += dt;
       updatePlayer(ctx, dt);
       updateCamera(ctx);
     }
 
-    updateHud(scene, game);
+    if (!game.cutscene) {
+      updateHud(scene, game);
+    }
     render(scene.ctx, game);
     requestAnimationFrame(tick);
   }

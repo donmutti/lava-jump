@@ -4,6 +4,44 @@ import { createPlayer } from '../entities/player';
 import { clamp } from '../core/math';
 import { setOverlay } from '../dom/overlay';
 
+export const CUTSCENE_DURATION = {
+  intro: 6,
+  ending: 6,
+};
+
+export function startCutscene(ctx, name) {
+  const { game, scene } = ctx;
+  game.state = name;
+  game.cutscene = { name, t: 0 };
+  setOverlay(scene, game, '', '', false);
+}
+
+export function advanceCutscene(ctx, dt) {
+  const { game } = ctx;
+  if (!game.cutscene) {
+    return;
+  }
+  game.cutscene.t += dt;
+  if (game.cutscene.t >= CUTSCENE_DURATION[game.cutscene.name]) {
+    finishCutscene(ctx);
+  }
+}
+
+export function finishCutscene(ctx) {
+  const { game, scene } = ctx;
+  const name = game.cutscene ? game.cutscene.name : null;
+  game.cutscene = null;
+
+  if (name === 'ending') {
+    game.state = 'won';
+    game.message = `You cleared all ${LEVELS.length} levels in ${game.timer.toFixed(1)}s with ${game.deaths} respawns.`;
+    setOverlay(scene, game, 'You made it!', `${game.message} Press R to play again.`, true);
+  } else {
+    showLevelIntro(ctx);
+  }
+  scene.canvas.focus();
+}
+
 export function resetPlayer(ctx) {
   const { game, scene } = ctx;
   const level = LEVELS[game.levelIndex];
@@ -13,6 +51,7 @@ export function resetPlayer(ctx) {
   game.state = 'playing';
   game.message = `Restarted ${level.name}.`;
   setOverlay(scene, game, '', '', false);
+  driveInHud(scene);
   scene.canvas.focus();
 }
 
@@ -38,21 +77,27 @@ export function startPlaying(ctx) {
   const { game, scene } = ctx;
   game.state = 'playing';
   setOverlay(scene, game, '', '', false);
+  driveInHud(scene);
   scene.canvas.focus();
 }
 
+function driveInHud(scene) {
+  scene.hud.classList.remove('hud-enter');
+  // force reflow so the animation restarts from its off-screen position
+  void scene.hud.offsetWidth;
+  scene.hud.classList.add('hud-enter');
+}
+
 export function fullRestart(ctx) {
-  const { game, scene } = ctx;
+  const { game } = ctx;
   const level = LEVELS[0];
   game.deaths = 0;
   game.timer = 0;
   game.levelIndex = 0;
-  game.state = 'ready';
-  game.message = 'Make it across the pits.';
   game.player = createPlayer(level.start.x, level.start.y);
   game.camera.x = 0;
   game.camera.y = 0;
-  setOverlay(scene, game, 'Lava Jump', 'Press any movement key to begin. Reach the portal without falling into the pits.', true);
+  startCutscene(ctx, 'intro');
 }
 
 export function triggerDeath(ctx, message) {
