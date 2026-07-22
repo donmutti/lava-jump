@@ -1,0 +1,54 @@
+<!doctype html>
+<html class="no-js" lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lava Leap</title>
+  <link rel="stylesheet" href="css/style.css">
+  <meta name="description" content="A canvas platformer where you sprint with WASD and leap across lava to reach the goal.">
+
+  <meta property="og:title" content="Lava Leap">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="">
+  <meta property="og:image" content="icon.png">
+  <meta property="og:image:alt" content="Lava Leap browser game icon">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#120f24">
+</head>
+
+<body>
+  <main class="game-page">
+    <section class="game-shell" aria-labelledby="game-title">
+      <div class="game-copy">
+        <p class="eyebrow">Browser Game</p>
+        <h1 id="game-title">Lava Leap</h1>
+        <p class="subtitle">Dash, jump, and survive a molten obstacle course.</p>
+      </div>
+
+      <div id="game-root" class="game-root" aria-live="polite"></div>
+
+      <div class="game-instructions" aria-label="Game instructions">
+        <div>
+          <strong>Controls:</strong> <span>W</span> jump, <span>A</span> move left, <span>D</span> move right, <span>S</span> fast fall.
+        </div>
+        <div>
+          <strong>Goal:</strong> Cross the platforms, avoid the lava, and reach the glowing portal. Press <span>R</span> to restart.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <noscript>
+    <p class="noscript-message">This game needs JavaScript enabled to run.</p>
+  </noscript>
+  <script src="js/app.js"></script>
+
+</body>
+
+</html>

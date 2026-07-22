@@ -1,0 +1,27 @@
+import { createPlayer } from '../entities/player.js';
+import { level, CHECKPOINTS } from '../config/level.js';
+
+export function createInput() {
+  return {
+    left: false,
+    right: false,
+    up: false,
+    down: false,
+  };
+}
+
+export function createGame(now) {
+  return {
+    state: 'ready',
+    timer: 0,
+    deaths: 0,
+    checkpointIndex: 0,
+    checkpoints: CHECKPOINTS.map((cp) => ({ ...cp })),
+    player: createPlayer(level.start.x, level.start.y),
+    camera: { x: 0, y: 0 },
+    lastFrame: now,
+    message: 'Press A/D to move and W to jump.',
+    overlayVisible: true,
+    lavaPhase: 0,
+  };
+}
