@@ -16,13 +16,19 @@ const GROUND_Y = 420;
 const UFO_ENTER = 1.4;
 const UFO_HOVER = 2.4;
 const BEAM_ON = 2.6;
-const LIFT_START = 3.0;
+const CHASE_START = 2.8; // the chicken pauses a beat before bolting after the cow
+const CHASE_END = 4.2; // and stops short of the saucer's exit (UFO_EXIT - 0.2)
+const LIFT_START = 3.4; // the beam holds the cow briefly before it starts lifting
 const LIFT_END = 4.3;
 const UFO_EXIT = 4.4;
+const EXIT_DUR = 1.6; // how long the UFO takes to climb and slide off-screen
 
 const COW_X = 640;
 const UFO_TOP_Y = -120;
 const UFO_HOVER_Y = 120;
+const UFO_EXIT_X = VIEWPORT_WIDTH + 160; // saucer slides off to the right as it leaves
+
+const CHICKEN_HOME_X = 340; // where the chicken starts, beside the house
 
 function clamp01(v) {
   return Math.max(0, Math.min(1, v));
@@ -42,28 +48,50 @@ export function renderIntro(c, t) {
   drawHills(c);
   drawGround(c);
   drawHouse(c, 200);
-  drawChicken(c, 340, t);
 
   const ufoProgress = easeInOut(clamp01((t - UFO_ENTER) / (UFO_HOVER - UFO_ENTER)));
   let ufoY = lerp(UFO_TOP_Y, UFO_HOVER_Y, ufoProgress);
+  let ufoX = COW_X;
   if (t > UFO_EXIT) {
-    const exit = easeInOut(clamp01((t - UFO_EXIT) / 1.4));
+    const exit = easeInOut(clamp01((t - UFO_EXIT) / EXIT_DUR));
     ufoY = lerp(UFO_HOVER_Y, UFO_TOP_Y, exit);
+    ufoX = lerp(COW_X, UFO_EXIT_X, exit);
   }
 
   const lift = easeInOut(clamp01((t - LIFT_START) / (LIFT_END - LIFT_START)));
   const cowRestY = GROUND_Y - 34;
   const cowLiftedY = ufoY + 66;
   const cowY = lerp(cowRestY, cowLiftedY, lift);
-  const cowGone = t > UFO_EXIT && lift >= 1;
+  const cowX = lerp(COW_X, ufoX, lift);
+  const cowGone = ufoX > VIEWPORT_WIDTH + 80;
 
-  if (t > BEAM_ON) {
-    drawBeam(c, COW_X, ufoY + 34, cowY, t);
+  // The chicken bolts from the house the instant the beam grabs the cow and
+  // runs to where the COW is — the spot she was taken from (COW_X), directly
+  // beneath her, never farther. He's chasing the cow, not the UFO that slides
+  // away overhead, so he stops under her last ground position and reaches up.
+  const chase = clamp01((t - CHASE_START) / (CHASE_END - CHASE_START));
+  const chaseTarget = lerp(CHICKEN_HOME_X, COW_X, easeInOut(chase));
+  const chickenX = Math.min(Math.max(CHICKEN_HOME_X, chaseTarget), COW_X);
+  const running = t > CHASE_START && t < CHASE_END && !cowGone;
+  // A last desperate leaping lunge — launched while still finishing the run
+  // (before CHASE_END) so it reads as a running leap, not a stop-then-jump.
+  const lungeWindow = clamp01((t - (CHASE_END - 0.6)) / 0.4);
+  const lunge = running ? Math.sin(lungeWindow * Math.PI) : 0;
+  // The chicken cranes its head up to watch the saucer — once as it arrives
+  // and descends, and again as it climbs away with the cow.
+  const lookOnArrival = clamp01((t - UFO_ENTER) / 0.4) * (1 - clamp01((t - UFO_HOVER) / 0.4));
+  const lookOnExit = clamp01((t - UFO_EXIT) / 0.3);
+  const lookUp = cowGone ? 0 : Math.max(lookOnArrival, lookOnExit);
+
+  if (t > BEAM_ON && !cowGone) {
+    drawBeam(c, cowX, ufoY + 34, cowY, t);
   }
   if (!cowGone) {
-    drawCow(c, COW_X, cowY, lift);
+    drawCow(c, cowX, cowY, lift);
   }
-  drawUfo(c, COW_X, ufoY, t);
+  drawUfo(c, ufoX, ufoY, t);
+
+  drawChicken(c, chickenX, t, running, lunge, lookUp);
 }
 
 function drawSky(c) {
@@ -136,22 +164,66 @@ function drawHouse(c, x) {
   c.fillRect(x + 82, y + 54, 18, 18);
 }
 
-function drawChicken(c, x, t) {
+function drawChicken(c, x, t, running, lunge, lookUp = 0) {
+  // Running: fast vertical bob and a forward lean; lunge lifts it off the
+  // ground and stretches it toward the fleeing cow.
+  const gait = running ? Math.sin(t * 18) : Math.sin(t * 4);
+  const bob = running ? Math.abs(gait) * -4 : gait * 1.5;
+  const lift = lunge * 22;
+  const lean = (running ? 0.22 : 0) + lunge * 0.35;
   const y = GROUND_Y - 46;
-  const bob = Math.sin(t * 4) * 1.5;
+
   c.save();
-  c.translate(x, y + bob);
-  // shadow
-  c.fillStyle = 'rgba(0,0,0,0.18)';
-  c.fillRect(2, 44, 26, 6);
+  c.translate(x, y + bob - lift);
+  // shadow — spreads and fades as it leaps
+  c.fillStyle = `rgba(0,0,0,${0.18 - lunge * 0.1})`;
+  c.fillRect(2 - lunge * 4, 44 + lift, 26 + lunge * 8, 6);
+  // lean the whole bird forward toward the cow
+  c.translate(15, 24);
+  c.rotate(lean);
+  c.translate(-15, -24);
   // body
   c.fillStyle = '#ffe082';
   c.fillRect(4, 8, 22, 26);
-  c.fillRect(8, 0, 14, 12);
-  // legs
+  // wing — pinned up in alarm while chasing, flapping
+  c.fillStyle = '#f6c948';
+  if (running) {
+    const flap = Math.sin(t * 22) * 6;
+    c.save();
+    c.translate(6, 12);
+    c.rotate(-0.5 - lunge * 0.4);
+    c.fillRect(-3, -14 - flap, 8, 18);
+    c.restore();
+  } else {
+    c.fillRect(4, 12, 7, 16);
+  }
+  // legs — pumping stride when running (split apart), planted otherwise
   c.fillStyle = '#ff9671';
-  c.fillRect(9, 34, 5, 12);
-  c.fillRect(18, 34, 5, 12);
+  if (running) {
+    const stride = gait * 7;
+    c.save();
+    c.translate(11, 34);
+    c.rotate(stride * 0.03);
+    c.fillRect(-2, 0, 5, 13);
+    c.restore();
+    c.save();
+    c.translate(20, 34);
+    c.rotate(-stride * 0.03);
+    c.fillRect(-2, 0, 5, 13);
+    c.restore();
+  } else {
+    c.fillRect(9, 34, 5, 12);
+    c.fillRect(18, 34, 5, 12);
+  }
+  // head cluster — cranes upward to watch the UFO. Pivots at the neck so the
+  // beak lifts toward the sky, comb tips back, eye rides higher.
+  c.save();
+  c.translate(15, 6);
+  c.rotate(-lookUp * 0.6);
+  c.translate(-15, -6);
+  // head
+  c.fillStyle = '#ffe082';
+  c.fillRect(8, 0, 14, 12);
   // beak
   c.fillStyle = '#ff9671';
   c.fillRect(22, 4, 6, 4);
@@ -161,6 +233,7 @@ function drawChicken(c, x, t) {
   // comb
   c.fillStyle = '#e2483a';
   c.fillRect(10, -4, 10, 4);
+  c.restore();
   c.restore();
 }
 
