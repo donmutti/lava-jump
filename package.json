@@ -1,5 +1,5 @@
 {
-  "name": "lava-leap",
+  "name": "lava-jump",
   "version": "0.0.1",
   "description": "A canvas platformer browser game with WASD controls and lava jumping.",
   "private": true,

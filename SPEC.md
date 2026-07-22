@@ -2,7 +2,7 @@
 
 A small canvas-based browser platformer built with vanilla JavaScript. The player sprints and jumps across a molten obstacle course to reach a glowing portal, restarting the current level from its start on death.
 
-> Note: the product name is **Lava Jump**, matching the repository directory `lava-jump`. The `package.json` `name` field remains the npm identifier `lava-leap` (a package id, not user-facing branding).
+> Note: the product name is **Lava Jump**, matching the repository directory `lava-jump` and the `package.json` `name` field.
 
 ---
 
@@ -199,6 +199,7 @@ Keyboard-driven, handled by `handleKeyChange`:
 
 - Movement/jump keys call `preventDefault` to avoid page scroll.
 - Any key while a cutscene is playing skips it.
+- Both the letter keys (`A`/`D`) and the arrow keys (`←`/`→`) are accepted for movement, but the on-screen controls hint (`.game-instructions` in `index.html`) displays only the arrow keys.
 - Any movement/jump key while `respawning` dismisses the death overlay and respawns the player (the overlay otherwise waits indefinitely).
 - `pointerdown` on the canvas starts the game and focuses it (no pointer-based movement).
 
@@ -282,7 +283,4 @@ Bootstrapped by `fullRestart()` then `requestAnimationFrame(tick)`.
 Ideas captured for later; not yet specified or scheduled.
 
 - **Collectible items granting a super jump**: apples, cakes, and similar edibles scattered sparsely across the levels (2–3 per level). Collecting one grants a single super jump — a double-jump that lets the player jump again while already airborne (one extra jump per item collected).
-- **Rename `package.json` `name` from `lava-leap` to `lava-jump`**: align the npm identifier with the rebranded product name and repo directory. Currently kept as `lava-leap` (see the note under §1's title); revisit whether the package id should follow the rename.
-- **Remove `LICENSE.txt`**: drop the license file from the project.
-- **Controls hint: arrows-only display**: keep accepting both `A`/`D` and `←`/`→` for movement (see §9), but show only the arrow keys in the on-screen controls hint (`.game-instructions` in `index.html`) rather than the `A`/`D` letters.
 - **Ending cutscene narrative**: the happy sunset-Sunny-Meadow homecoming (chicken + rescued cow). Only the intro cutscene is built; `render/cutscene.js` renders a flat backdrop for `name === 'ending'` (see §8.1).
