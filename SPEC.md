@@ -132,7 +132,7 @@ Two enums in `config/theme.js` drive per-level art:
 - `game.levelIndex` tracks the current level (starts at 0).
 - On reaching a level's goal: if a next level exists, advance (`levelIndex += 1`), spawn the player at the new level's `start`, and show its intro screen. If it was the **last** level, transition to `won`.
 - `timer` and `deaths` **carry across levels** — they are whole-run totals, not per-level. `fullRestart()` resets `levelIndex` to 0 along with the run stats.
-- The run is a **countdown against a fixed 5-minute (300s) budget** (`TIME_LIMIT`). `timer` accrues while `playing`; the HUD shows the remaining time (`TIME_LIMIT - timer`) as `MM:SS` (e.g. `04:59`). When `timer` reaches `TIME_LIMIT` mid-play, the run is lost immediately (`timeUp` game-over) — the Cow is not saved. The countdown pauses during level-intro overlays, death overlays, and cutscenes.
+- The run is a **countdown against a fixed 2-minute (120s) budget** (`TIME_LIMIT`). `timer` accrues while `playing`; the HUD shows the remaining time (`TIME_LIMIT - timer`) as `MM:SS` (e.g. `01:59`). When `timer` reaches `TIME_LIMIT` mid-play, the run is lost immediately (`timeUp` game-over) — the Cow is not saved. The countdown pauses during level-intro overlays, death overlays, and cutscenes.
 - On death, the player respawns at the current level's `start` — there are no mid-level checkpoints; each death costs the whole level.
 
 ---

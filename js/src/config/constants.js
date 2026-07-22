@@ -3,7 +3,7 @@ export const VIEWPORT_HEIGHT = 540;
 export const WORLD_WIDTH = 2800;
 export const WORLD_HEIGHT = 900;
 
-export const TIME_LIMIT = 300;
+export const TIME_LIMIT = 120;
 
 export const PHYSICS = {
   gravity: 2200,
