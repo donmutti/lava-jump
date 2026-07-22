@@ -30,17 +30,19 @@ const UFO_EXIT_X = VIEWPORT_WIDTH + 160; // saucer slides off to the right as it
 
 const CHICKEN_HOME_X = 340; // where the chicken starts, beside the house
 
-function clamp01(v) {
+export function clamp01(v) {
   return Math.max(0, Math.min(1, v));
 }
 
-function easeInOut(v) {
+export function easeInOut(v) {
   return v < 0.5 ? 2 * v * v : 1 - Math.pow(-2 * v + 2, 2) / 2;
 }
 
-function lerp(a, b, t) {
+export function lerp(a, b, t) {
   return a + (b - a) * t;
 }
+
+export const SCENE = { GROUND_Y, COW_X };
 
 export function renderIntro(c, t) {
   drawSky(c);
@@ -94,7 +96,7 @@ export function renderIntro(c, t) {
   drawChicken(c, chickenX, t, running, lunge, lookUp);
 }
 
-function drawSky(c) {
+export function drawSky(c) {
   const g = c.createLinearGradient(0, 0, 0, GROUND_Y);
   g.addColorStop(0, SKY_TOP);
   g.addColorStop(1, SKY_BOTTOM);
@@ -102,7 +104,7 @@ function drawSky(c) {
   c.fillRect(0, 0, VIEWPORT_WIDTH, GROUND_Y);
 }
 
-function drawSun(c, t) {
+export function drawSun(c, t) {
   const cx = 810;
   const cy = 96 + Math.sin(t * 0.6) * 3;
   c.save();
@@ -117,7 +119,7 @@ function drawSun(c, t) {
   c.restore();
 }
 
-function drawHills(c) {
+export function drawHills(c) {
   drawHillBand(c, HILL_FAR, GROUND_Y - 40, 120, 0);
   drawHillBand(c, HILL_NEAR, GROUND_Y - 10, 90, 220);
 }
@@ -135,14 +137,14 @@ function drawHillBand(c, color, baseY, amp, phase) {
   c.fill();
 }
 
-function drawGround(c) {
+export function drawGround(c) {
   c.fillStyle = GRASS;
   c.fillRect(0, GROUND_Y, VIEWPORT_WIDTH, VIEWPORT_HEIGHT - GROUND_Y);
   c.fillStyle = '#5a9648';
   c.fillRect(0, GROUND_Y, VIEWPORT_WIDTH, 6);
 }
 
-function drawHouse(c, x) {
+export function drawHouse(c, x) {
   const y = GROUND_Y - 92;
   // walls
   c.fillStyle = '#e8d6b0';
@@ -164,17 +166,25 @@ function drawHouse(c, x) {
   c.fillRect(x + 82, y + 54, 18, 18);
 }
 
-function drawChicken(c, x, t, running, lunge, lookUp = 0) {
+export function drawChicken(c, x, t, running, lunge, lookUp = 0, walking = false, faceLeft = false) {
   // Running: fast vertical bob and a forward lean; lunge lifts it off the
-  // ground and stretches it toward the fleeing cow.
-  const gait = running ? Math.sin(t * 18) : Math.sin(t * 4);
-  const bob = running ? Math.abs(gait) * -4 : gait * 1.5;
+  // ground and stretches it toward the fleeing cow. Walking is a calmer,
+  // slower stride used for the homecoming (legs move, wings stay tucked).
+  const strideActive = running || walking;
+  const gait = running ? Math.sin(t * 18) : walking ? Math.sin(t * 9) : Math.sin(t * 4);
+  const bob = running ? Math.abs(gait) * -4 : walking ? Math.abs(gait) * -2 : gait * 1.5;
   const lift = lunge * 22;
   const lean = (running ? 0.22 : 0) + lunge * 0.35;
   const y = GROUND_Y - 46;
 
   c.save();
   c.translate(x, y + bob - lift);
+  if (faceLeft) {
+    // mirror around the body's center so the bird faces left when walking home
+    c.translate(15, 0);
+    c.scale(-1, 1);
+    c.translate(-15, 0);
+  }
   // shadow — spreads and fades as it leaps
   c.fillStyle = `rgba(0,0,0,${0.18 - lunge * 0.1})`;
   c.fillRect(2 - lunge * 4, 44 + lift, 26 + lunge * 8, 6);
@@ -197,9 +207,9 @@ function drawChicken(c, x, t, running, lunge, lookUp = 0) {
   } else {
     c.fillRect(4, 12, 7, 16);
   }
-  // legs — pumping stride when running (split apart), planted otherwise
+  // legs — pumping stride when running or walking (split apart), planted otherwise
   c.fillStyle = '#ff9671';
-  if (running) {
+  if (strideActive) {
     const stride = gait * 7;
     c.save();
     c.translate(11, 34);
@@ -237,9 +247,12 @@ function drawChicken(c, x, t, running, lunge, lookUp = 0) {
   c.restore();
 }
 
-function drawCow(c, x, y, lift) {
+export function drawCow(c, x, y, lift, faceLeft = false) {
   c.save();
   c.translate(x, y);
+  if (faceLeft) {
+    c.scale(-1, 1);
+  }
   if (lift < 0.05) {
     c.fillStyle = 'rgba(0,0,0,0.16)';
     c.fillRect(-24, 32, 52, 6);
