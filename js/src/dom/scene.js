@@ -33,10 +33,11 @@ export function buildScene(root) {
   const canvasShell = document.createElement('div');
   canvasShell.className = 'canvas-shell';
 
+  const dpr = window.devicePixelRatio || 1;
   const canvas = document.createElement('canvas');
   canvas.className = 'game-canvas';
-  canvas.width = VIEWPORT_WIDTH;
-  canvas.height = VIEWPORT_HEIGHT;
+  canvas.width = VIEWPORT_WIDTH * dpr;
+  canvas.height = VIEWPORT_HEIGHT * dpr;
   canvas.setAttribute('aria-label', 'Lava Leap platformer');
   canvas.setAttribute('role', 'img');
   canvas.tabIndex = 0;
@@ -61,6 +62,8 @@ export function buildScene(root) {
   if (!ctx) {
     throw new Error('Unable to create 2D canvas context.');
   }
+
+  ctx.scale(dpr, dpr);
 
   return {
     canvas,

@@ -48,7 +48,8 @@ The game is split into ES modules under `js/src/` (config, core, dom, systems, r
 
 - Origin `(0,0)` is top-left; `+y` points down.
 - The world is larger than the viewport; a camera scrolls to follow the player.
-- The canvas is rendered at fixed 960×540 and scaled to fit its container via CSS (`width: 100%; height: auto`).
+- The canvas is rendered in a fixed 960×540 logical coordinate space and scaled to fit its container via CSS (`width: 100%; height: auto`). All game logic, physics, camera, and drawing work in these logical units.
+- **DPR-aware rendering**: the canvas backing store is sized to `960 × devicePixelRatio` by `540 × devicePixelRatio`, and the 2D context is scaled by `devicePixelRatio` once at construction (in `buildScene`) so every draw call still uses logical 960×540 coordinates. This keeps rendering crisp on HiDPI/Retina displays. DPR is read once on load; a mid-session DPR change (e.g. dragging the window between monitors of differing density) is not re-detected.
 
 ---
 
@@ -236,4 +237,4 @@ Bootstrapped by `fullRestart()` then `requestAnimationFrame(tick)`.
 - Single hardcoded level; no progression beyond the one goal.
 - Keyboard-only gameplay; not playable on touch devices.
 - No audio, no persistence, no scoring leaderboard.
-- Fixed internal resolution (960×540) scaled by CSS; no DPR-aware rendering.
+- Fixed logical resolution (960×540) scaled by CSS; DPR-aware backing store is applied once on load, so a mid-session device-pixel-ratio change is not re-detected.
