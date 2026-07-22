@@ -57,7 +57,7 @@ function handleKeyChange(ctx, event, pressed) {
 
   if (key === 'w' || key === 'arrowup' || key === ' ') {
     input.up = pressed;
-    if (pressed) {
+    if (pressed && !event.repeat) {
       queueJump(ctx);
     }
   }

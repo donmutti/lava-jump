@@ -72,7 +72,7 @@ Defined in the `PHYSICS` constant:
 
 **Jump forgiveness**
 - **Coyote time** (`0.12s`): jump remains allowed briefly after leaving a ledge.
-- **Jump buffer** (`0.15s`): a jump press is remembered briefly so it fires the moment the player lands.
+- **Jump buffer** (`0.15s`): a jump press is remembered briefly so it fires the moment the player lands. Only a fresh key press arms the buffer; auto-repeat events from a held jump key are ignored, so holding jump does not re-jump on landing.
 - A jump fires only when a buffered press and coyote timer are both active.
 
 ---
@@ -97,7 +97,7 @@ Axis-separated, swept AABB resolution against platform rectangles (in `systems/p
 
 The game ships **5 hardcoded levels** of increasing difficulty, each with its own theme and pit fill (see §6.3). Levels are authored as data in `js/src/config/levels.json` and expanded at load into runtime `level` objects by `config/level.js` (see §6.1). The active level is `LEVELS[game.levelIndex]`; every consumer reads the current level rather than a static import.
 
-The five levels: **Sunny Meadow** (field / water), **Poison Thicket** (forest / poison), **Molten Cavern** (cave / lava), **Cliffs of Dawn** (mountain / abyss), **Xen Rift** (alien / plasma).
+The five levels: **Sunny Meadow** (field / water), **Poison Forest** (forest / poison), **Molten Cavern** (cave / lava), **Cliffs of Dawn** (mountain / abyss), **Xen Rift** (alien / plasma).
 
 Each level object has this shape:
 
@@ -123,7 +123,7 @@ To stay human-readable yet compact, `levels.json` stores every rectangle/point a
 
 Two enums in `config/theme.js` drive per-level art:
 
-- **`THEME`** selects the background: `FIELD`, `FOREST`, `CAVE`, `MOUNTAIN`, `ALIEN`. Each theme is a descriptor carrying a palette (sky gradient, ridge/mist colors, celestial body) that `drawBackground` reads instead of the global `COLORS`.
+- **`THEME`** selects the background: `FIELD`, `FOREST`, `CAVE`, `MOUNTAIN`, `ALIEN`. Each theme is a descriptor carrying a palette (sky gradient, ridge/mist colors, celestial body) plus a `silhouette` style (`'mountain'`, `'trees'`, `'cave'`, or `'asteroids'`) that `drawBackground` reads instead of the global `COLORS`. `'mountain'` draws jagged ridges (optionally snow-capped); `'trees'` draws a layered conifer treeline (FOREST); `'cave'` draws a rocky ceiling with hanging stalactites in place of the top layers (CAVE); `'asteroids'` draws a starfield with parallax drifting asteroids over empty space instead of ground ridges (ALIEN).
 - **`PIT`** selects the fill drawn inside every pit rectangle: `WATER`, `POISON`, `LAVA`, `ABYSS`, `PLASMA`. Each is a descriptor carrying a palette and a draw style. `LAVA`/`WATER`/`POISON`/`PLASMA` render an animated liquid surface (varying palette and calmness); `ABYSS` renders a dark empty chasm with no liquid. All pit fills are equally fatal on overlap — the fill is purely visual plus flavor; it does not change collision or death rules.
 
 `PIT` is deliberately scoped to *falling hazards that fill a rectangle*, not a general hazard concept — future moving threats (e.g. NPC birds) would be a separate model, not a `PIT` value.
@@ -208,7 +208,7 @@ Keyboard-driven, handled by `handleKeyChange`:
 
 `render()` draws each frame in back-to-front order:
 
-1. `drawBackground` — theme-driven (§6.3): vertical sky gradient, a celestial body with radial glow, two parallax mist bands, three parallax ridge layers, and drifting particles. Colors come from the active level's `THEME` descriptor.
+1. `drawBackground` — theme-driven (§6.3): vertical sky gradient, a celestial body with radial glow, two parallax mist bands, three parallax silhouette layers, and drifting particles. Colors and silhouette style (mountains / treeline / cave with stalactites) come from the active level's `THEME` descriptor.
 2. `drawPlatforms` — face + lit top edge + highlight strip (camera-translated).
 3. `drawPits` — dispatches on the active level's `PIT` fill (§6.3): liquid fills (`WATER`/`POISON`/`LAVA`/`PLASMA`) draw a glowing base, vertical gradient, animated wave crest, and rising bubbles driven by `game.lavaPhase`, each in its own palette; `ABYSS` draws a dark empty chasm with no liquid.
 4. `drawGoal` — pulsing portal (glow ellipse, ring, white core).

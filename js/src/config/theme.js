@@ -7,6 +7,7 @@
 // previously read from COLORS.
 export const THEME = {
   FIELD: {
+    silhouette: 'mountain',
     skyTop: '#7ec8e3',
     skyBottom: '#dff3d8',
     ridgeFar: '#9fc98a',
@@ -21,6 +22,7 @@ export const THEME = {
     celestialGlow: 'rgba(255, 236, 160, 0.4)',
   },
   FOREST: {
+    silhouette: 'trees',
     skyTop: '#2a2f4a',
     skyBottom: '#151a2e',
     ridgeFar: '#2b3a2f',
@@ -35,6 +37,7 @@ export const THEME = {
     celestialGlow: 'rgba(200, 224, 180, 0.18)',
   },
   CAVE: {
+    silhouette: 'cave',
     skyTop: '#241416',
     skyBottom: '#0d0708',
     ridgeFar: '#3a2320',
@@ -49,6 +52,7 @@ export const THEME = {
     celestialGlow: 'rgba(255, 120, 60, 0.2)',
   },
   MOUNTAIN: {
+    silhouette: 'mountain',
     skyTop: '#ffb27a',
     skyBottom: '#ffe4c4',
     ridgeFar: '#8a7ba8',
@@ -63,6 +67,7 @@ export const THEME = {
     celestialGlow: 'rgba(255, 200, 150, 0.35)',
   },
   ALIEN: {
+    silhouette: 'asteroids',
     skyTop: '#3a1a52',
     skyBottom: '#0f0620',
     ridgeFar: '#4a2a6a',
