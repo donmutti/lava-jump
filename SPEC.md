@@ -104,7 +104,7 @@ Each level object has this shape:
 - `theme`: a `THEME` enum value selecting the background art and palette (§6.3).
 - `pit`: a `PIT` enum value selecting the fill drawn in every pit rectangle and its palette (§6.3).
 - `start`: `{ x, y }` — spawn point for the level.
-- `goal`: `{ x, y, width, height }` — the portal that completes the level.
+- `goal`: `{ x, y, width, height }` — the portal that completes the level. The portal is drawn with a support leg whose foot sits at `(goal.x + 26 .. goal.x + 44, goal.y + goal.height)`; each level's `goal` is placed so that foot rests on a platform top (matching y, leg x-range within the platform span) rather than floating.
 - `platforms`: array of `{ x, y, width, height }` rectangles — thick ground slabs plus thin floating ledges.
 - `pits`: array of `{ x, y, width, height }` rectangles — deadly gaps (all share the level's `pit` fill).
 
