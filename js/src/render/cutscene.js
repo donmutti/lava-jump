@@ -1,4 +1,5 @@
 import { VIEWPORT_WIDTH, VIEWPORT_HEIGHT } from '../config/constants';
+import { renderIntro } from './intro';
 
 const BAR_HEIGHT = 64;
 
@@ -8,9 +9,12 @@ export function renderCutscene(c, game) {
     return;
   }
 
-  // Empty stage for now: a flat backdrop. Narrative art is layered in later.
-  c.fillStyle = '#05040a';
-  c.fillRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+  if (scene.name === 'intro') {
+    renderIntro(c, scene.t);
+  } else {
+    c.fillStyle = '#05040a';
+    c.fillRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+  }
 
   drawLetterbox(c, scene.t);
 }
