@@ -1,4 +1,4 @@
-import { VIEWPORT_WIDTH, VIEWPORT_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT, TIME_LIMIT } from '../config/constants';
+import { VIEWPORT_WIDTH, VIEWPORT_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../config/constants';
 import { LEVELS } from '../config/level';
 import { createPlayer } from '../entities/player';
 import { clamp } from '../core/math';
@@ -34,8 +34,7 @@ export function finishCutscene(ctx) {
 
   if (name === 'ending') {
     game.state = 'won';
-    const timeLeft = Math.max(0, TIME_LIMIT - game.timer);
-    game.message = `You saved the Cow with ${timeLeft.toFixed(1)}s to spare.`;
+    game.message = `You saved the Cow in ${formatClock(game.timer)}. Good job!`;
     setOverlay(scene, game, 'You made it!', game.message, 'Press R to play again.', true);
   } else {
     showLevelIntro(ctx);
@@ -122,4 +121,11 @@ export function triggerTimeUp(ctx) {
   game.state = 'timeUp';
   game.message = 'The aliens got away with the Cow.';
   setOverlay(scene, game, 'Out of time.', game.message, 'Press R to try again.', true);
+}
+
+function formatClock(seconds) {
+  const total = Math.floor(Math.max(0, seconds));
+  const minutes = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${minutes}:${String(secs).padStart(2, '0')}`;
 }

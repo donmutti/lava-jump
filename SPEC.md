@@ -171,7 +171,7 @@ Tracked stats: `timer` (seconds elapsed, counts down from `TIME_LIMIT` for displ
 
 Each level begins with a **level-intro screen** (`levelIntro` state): an overlay showing the level position and name (e.g. "Level 1/5: Sunny Meadow"), which waits for a movement/jump keypress before entering `playing`. The world is rendered behind the overlay but the simulation and timer are paused until dismissed. This applies to the first level (reached when the intro cutscene finishes) and to every subsequent level reached via `advanceLevel()`.
 
-Reaching a non-final level's goal does **not** enter `won`; it advances to the next level (see §6.2) and shows that level's intro screen (`levelIntro`). Only clearing the final level enters `won`.
+Reaching a non-final level's goal does **not** enter `won`; it advances to the next level (see §6.2) and shows that level's intro screen (`levelIntro`). Only clearing the final level enters `won`. The victory overlay reads "You made it!" with the body "You saved the Cow in M:SS. Good job!", where M:SS is the total elapsed play time (`game.timer`, formatted minutes:seconds).
 
 `triggerDeath()` increments deaths and shows the "Ouch." overlay. The death overlay **persists until the player presses a key** (it does not auto-dismiss on a timer), so the player has time to read it. Any movement/jump key resumes play by calling `resetPlayer()`, which respawns at the current level's `start`.
 
