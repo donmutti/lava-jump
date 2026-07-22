@@ -227,6 +227,7 @@ Bootstrapped by `fullRestart()` then `requestAnimationFrame(tick)`.
 - `css/style.css` — HTML5 Boilerplate base plus custom themed styles (dark dusk/mountain palette, glassmorphic panels, responsive layout, overlay card).
 - A `<noscript>` fallback message displays if JavaScript is disabled.
 - The canvas exposes `role="img"` and an `aria-label`; `#game-root` is `aria-live="polite"`.
+- Because `#game-root` is empty until `buildScene` runs, `css/style.css` reserves the full frame footprint on `.game-root:empty` via two pseudo-elements: a font-relative HUD strip (`calc(0.95rem * 1.4 + 16px)` — one pill row: line-height plus padding and border) and a 16:9 canvas box (`aspect-ratio`, sized from the root's own width and painted with the canvas background), separated by the 12px frame gap. No hardcoded pixel heights, so the reservation holds at any viewport, font size, or zoom and the page does not reflow — the title never flashes through on load.
 
 ---
 

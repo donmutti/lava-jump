@@ -160,6 +160,30 @@ body {
   display: grid;
 }
 
+/* Reserve the full frame footprint before buildScene populates #game-root, so
+   the page never reflows and the title never flashes through on load. The empty
+   root becomes a grid column: a HUD strip (one pill row: line-height plus
+   padding and border), the 12px frame gap, and a 16:9 canvas box sized from its
+   own width. Font-relative — no magic pixel height — so it holds at any
+   viewport, font size, or zoom. */
+.game-root:empty {
+  gap: 12px;
+}
+
+.game-root:empty::before {
+  content: "";
+  display: block;
+  height: calc(0.95rem * 1.4 + 16px);
+}
+
+.game-root:empty::after {
+  content: "";
+  display: block;
+  aspect-ratio: 960 / 540;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #1b2950 0%, #0c1228 70%, #110e18 100%);
+}
+
 .game-frame {
   display: grid;
   gap: 12px;
