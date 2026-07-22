@@ -199,7 +199,7 @@ Keyboard-driven, handled by `handleKeyChange`:
 
 - Movement/jump keys call `preventDefault` to avoid page scroll.
 - Any key while a cutscene is playing skips it.
-- Both the letter keys (`A`/`D`) and the arrow keys (`←`/`→`) are accepted for movement, but the on-screen controls hint (`.game-instructions` in `index.html`) displays only the arrow keys.
+- Both the letter keys (`A`/`D`) and the arrow keys (`←`/`→`) are accepted for movement, but the on-screen controls hint (`.game-instructions` in `index.html`) reads `← → – move, Space – jump, R – restart` on a single line, showing only the arrow keys for movement.
 - Any movement/jump key while `respawning` dismisses the death overlay and respawns the player (the overlay otherwise waits indefinitely).
 - `pointerdown` on the canvas starts the game and focuses it (no pointer-based movement).
 
