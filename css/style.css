@@ -204,6 +204,10 @@ body {
   image-rendering: auto;
 }
 
+.game-canvas:focus {
+  outline: none;
+}
+
 .overlay {
   position: absolute;
   inset: 0;
