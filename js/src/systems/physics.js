@@ -81,19 +81,6 @@ export function updatePlayer(ctx, dt) {
     }
     return;
   }
-
-  updateCheckpoints(game);
-}
-
-function updateCheckpoints(game) {
-  const playerCenterX = game.player.x + game.player.width / 2;
-  for (let i = game.checkpointIndex + 1; i < game.checkpoints.length; i += 1) {
-    const checkpoint = game.checkpoints[i];
-    if (checkpoint.triggerX != null && playerCenterX > checkpoint.triggerX) {
-      game.checkpointIndex = i;
-      game.message = `Checkpoint reached: ${checkpoint.label}.`;
-    }
-  }
 }
 
 function movePlayerHorizontally(player, dt, level) {

@@ -17,8 +17,6 @@ export function createGame(now) {
     timer: 0,
     deaths: 0,
     levelIndex: 0,
-    checkpointIndex: 0,
-    checkpoints: level.checkpoints.map((cp) => ({ ...cp })),
     player: createPlayer(level.start.x, level.start.y),
     camera: { x: 0, y: 0 },
     lastFrame: now,

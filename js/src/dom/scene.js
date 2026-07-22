@@ -14,21 +14,15 @@ export function buildScene(root) {
   const stats = document.createElement('div');
   stats.className = 'hud-stats';
 
-  const checkpointStat = document.createElement('div');
-  checkpointStat.className = 'hud-pill';
-
-  const deathStat = document.createElement('div');
-  deathStat.className = 'hud-pill';
+  const levelStat = document.createElement('div');
+  levelStat.className = 'hud-pill';
 
   const timeStat = document.createElement('div');
   timeStat.className = 'hud-pill';
 
-  stats.append(checkpointStat, deathStat, timeStat);
+  stats.append(levelStat, timeStat);
 
-  const statusLabel = document.createElement('div');
-  statusLabel.className = 'hud-pill';
-
-  hud.append(stats, statusLabel);
+  hud.append(stats);
 
   const canvasShell = document.createElement('div');
   canvasShell.className = 'canvas-shell';
@@ -71,9 +65,7 @@ export function buildScene(root) {
     overlay,
     overlayTitle,
     overlayMessage,
-    checkpointStat,
-    deathStat,
+    levelStat,
     timeStat,
-    statusLabel,
   };
 }

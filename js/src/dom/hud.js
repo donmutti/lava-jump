@@ -1,6 +1,6 @@
+import { LEVELS } from '../config/level';
+
 export function updateHud(scene, game) {
-  scene.checkpointStat.textContent = `Checkpoint: ${game.checkpoints[game.checkpointIndex].label}`;
-  scene.deathStat.textContent = `Respawns: ${game.deaths}`;
+  scene.levelStat.textContent = `Level ${game.levelIndex + 1}/${LEVELS.length}: ${LEVELS[game.levelIndex].name}`;
   scene.timeStat.textContent = `Time: ${game.timer.toFixed(1)}s`;
-  scene.statusLabel.textContent = game.message;
 }

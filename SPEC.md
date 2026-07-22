@@ -1,6 +1,6 @@
 # Lava Jump — Technical Specification
 
-A small canvas-based browser platformer built with vanilla JavaScript. The player sprints and jumps across a molten obstacle course to reach a glowing portal, respawning at checkpoints on death.
+A small canvas-based browser platformer built with vanilla JavaScript. The player sprints and jumps across a molten obstacle course to reach a glowing portal, restarting the current level from its start on death.
 
 > Note: the product name is **Lava Jump**, matching the repository directory `lava-jump`. The `package.json` `name` field remains the npm identifier `lava-leap` (a package id, not user-facing branding).
 
@@ -26,7 +26,7 @@ The game is split into ES modules under `js/src/` (config, core, dom, systems, r
 **Goals**
 - Deliver a tight, responsive single-screen-scrolling platformer feel.
 - Forgiving controls: coyote time and jump buffering.
-- Checkpoint-based progression with death/respawn tracking.
+- Level-based progression with death/respawn tracking (respawn at the level start).
 - Self-contained, dependency-free runtime (no game engine).
 
 **Non-goals**
@@ -108,7 +108,6 @@ Each level object has this shape:
 - `goal`: `{ x, y, width, height }` — the portal that completes the level.
 - `platforms`: array of `{ x, y, width, height }` rectangles — thick ground slabs plus thin floating ledges.
 - `pits`: array of `{ x, y, width, height }` rectangles — deadly gaps (all share the level's `pit` fill).
-- `checkpoints`: array of `{ x, y, label, triggerX }` — respawn points, advanced when the player's center x passes `triggerX`. Index 0 is the level `start` (no `triggerX`).
 
 ### 6.1 Storage format
 
@@ -116,10 +115,9 @@ To stay human-readable yet compact, `levels.json` stores every rectangle/point a
 
 - Point → `[x, y]`
 - Rect → `[x, y, width, height]`
-- Checkpoint → `[x, y, label, triggerX]` (index 0 omits `triggerX`)
 - `theme` / `pit` → string keys matching the `THEME` / `PIT` enums (e.g. `"FIELD"`, `"WATER"`)
 
-`config/level.js` exports `LEVELS` (the expanded array of level objects) and a helper `expandLevel(raw)` that maps the tuples back into the `{ x, y, width, height }` / `{ x, y, label, triggerX }` objects the rest of the code consumes, and resolves the `theme`/`pit` strings to their enum descriptors. Webpack imports the `.json` natively; no loader change.
+`config/level.js` exports `LEVELS` (the expanded array of level objects) and a helper `expandLevel(raw)` that maps the tuples back into the `{ x, y, width, height }` objects the rest of the code consumes, and resolves the `theme`/`pit` strings to their enum descriptors. Webpack imports the `.json` natively; no loader change.
 
 ### 6.3 Theming & pit fills
 
@@ -133,9 +131,9 @@ Two enums in `config/theme.js` drive per-level art:
 ### 6.2 Progression
 
 - `game.levelIndex` tracks the current level (starts at 0).
-- On reaching a level's goal: if a next level exists, advance (`levelIndex += 1`), respawn the player at the new level's `start`, reset checkpoints to that level, and continue playing. If it was the **last** level, transition to `won`.
+- On reaching a level's goal: if a next level exists, advance (`levelIndex += 1`), spawn the player at the new level's `start`, and show its intro screen. If it was the **last** level, transition to `won`.
 - `timer` and `deaths` **carry across levels** — they are whole-run totals, not per-level. `fullRestart()` resets `levelIndex` to 0 along with the run stats.
-- On death, the player respawns at the highest reached checkpoint **within the current level**.
+- On death, the player respawns at the current level's `start` — there are no mid-level checkpoints; each death costs the whole level.
 
 ---
 
@@ -167,13 +165,13 @@ Created by `createPlayer(x, y)` (in `entities/player.js`):
 | `respawning` | Death overlay, persists until dismissed | `triggerDeath()` | `playing` via `resetPlayer()` on any dismiss key |
 | `won` | Victory overlay (only after the final level) | last-level goal overlap | `ready` via restart |
 
-Tracked stats: `timer` (seconds), `deaths` (respawn count), `levelIndex`, `checkpointIndex`.
+Tracked stats: `timer` (seconds), `deaths` (respawn count), `levelIndex`.
 
-Each level begins with a **level-intro screen** (`levelIntro` state): an overlay showing the level number and name (e.g. "Level 1 — Sunny Meadow"), which waits for a movement/jump keypress before entering `playing`. The world is rendered behind the overlay but the simulation and timer are paused until dismissed. This applies to the first level (after the title) and to every subsequent level reached via `advanceLevel()`.
+Each level begins with a **level-intro screen** (`levelIntro` state): an overlay showing the level position and name (e.g. "Level 1/5: Sunny Meadow"), which waits for a movement/jump keypress before entering `playing`. The world is rendered behind the overlay but the simulation and timer are paused until dismissed. This applies to the first level (after the title) and to every subsequent level reached via `advanceLevel()`.
 
 Reaching a non-final level's goal does **not** enter `won`; it advances to the next level (see §6.2) and shows that level's intro screen (`levelIntro`). Only clearing the final level enters `won`.
 
-`triggerDeath()` increments deaths and shows the "Ouch." overlay. The death overlay **persists until the player presses a key** (it does not auto-dismiss on a timer), so the player has time to read it. Any movement/jump key resumes play by calling `resetPlayer()`, which respawns at the last checkpoint in the current level.
+`triggerDeath()` increments deaths and shows the "Ouch." overlay. The death overlay **persists until the player presses a key** (it does not auto-dismiss on a timer), so the player has time to read it. Any movement/jump key resumes play by calling `resetPlayer()`, which respawns at the current level's `start`.
 
 ---
 
@@ -221,7 +219,7 @@ Keyboard-driven, handled by `handleKeyChange`:
 - The base palette lives in the `COLORS` constant; per-level background and pit-fill palettes live in the `THEME` / `PIT` descriptors in `config/theme.js`.
 - `game.lavaPhase` is the shared animation clock for all pit liquids (name retained for continuity), advancing every frame regardless of state.
 
-The DOM HUD (`updateHud`) is separate from canvas rendering and shows current checkpoint, respawn count, elapsed time, and a status message.
+The DOM HUD (`updateHud`) is separate from canvas rendering and shows the current level position and name (`Level N/total: name`) and elapsed time.
 
 ---
 
@@ -275,6 +273,5 @@ Bootstrapped by `fullRestart()` then `requestAnimationFrame(tick)`.
 
 Ideas captured for later; not yet specified or scheduled.
 
-- **Checkpoint semaphore with finger signs** (à la the DOS game "Prehistoric"): each checkpoint shows a semaphore with two finger-sign hands. Before the checkpoint is reached, the left hand points left and the right hand points down at the ground. Once reached, the left hand points down at the ground and the right hand points right (toward the way forward).
 - **Collectible items granting a super jump**: apples, cakes, and similar edibles scattered sparsely across the levels (2–3 per level). Collecting one grants a single super jump — a double-jump that lets the player jump again while already airborne (one extra jump per item collected).
 - **Rename `package.json` `name` from `lava-leap` to `lava-jump`**: align the npm identifier with the rebranded product name and repo directory. Currently kept as `lava-leap` (see the note under §1's title); revisit whether the package id should follow the rename.

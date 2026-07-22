@@ -9,10 +9,6 @@ function toPoint([x, y]) {
   return { x, y };
 }
 
-function toCheckpoint([x, y, label, triggerX]) {
-  return { x, y, label, triggerX };
-}
-
 export function expandLevel(raw) {
   return {
     name: raw.name,
@@ -22,7 +18,6 @@ export function expandLevel(raw) {
     goal: toRect(raw.goal),
     platforms: raw.platforms.map(toRect),
     pits: raw.pits.map(toRect),
-    checkpoints: raw.checkpoints.map(toCheckpoint),
   };
 }
 
