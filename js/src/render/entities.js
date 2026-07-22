@@ -1,5 +1,5 @@
-import { VIEWPORT_HEIGHT, COLORS } from '../config/constants.js';
-import { LEVELS } from '../config/level.js';
+import { VIEWPORT_HEIGHT, COLORS } from '../config/constants';
+import { LEVELS } from '../config/level';
 
 export function drawPlatforms(c, game) {
   const level = LEVELS[game.levelIndex];
@@ -19,50 +19,69 @@ export function drawPlatforms(c, game) {
   c.restore();
 }
 
-export function drawLava(c, game) {
+export function drawPits(c, game) {
   const level = LEVELS[game.levelIndex];
+  const fill = level.pit;
   c.save();
   c.translate(-game.camera.x, -game.camera.y);
 
-  for (const lava of level.lavaPools) {
-    const wave = Math.sin(game.lavaPhase * 4 + lava.x * 0.01) * 6;
-    const shimmer = Math.sin(game.lavaPhase * 6 + lava.width * 0.02) * 4;
-    c.shadowColor = COLORS.lava;
-    c.shadowBlur = 22;
-    c.fillStyle = COLORS.lavaDeep;
-    c.fillRect(lava.x, lava.y, lava.width, lava.height);
-
-    const lavaGradient = c.createLinearGradient(0, lava.y, 0, lava.y + lava.height);
-    lavaGradient.addColorStop(0, COLORS.lavaHot);
-    lavaGradient.addColorStop(0.24, COLORS.lava);
-    lavaGradient.addColorStop(1, COLORS.lavaDeep);
-    c.fillStyle = lavaGradient;
-    c.fillRect(lava.x, lava.y + 12, lava.width, lava.height - 12);
-
-    c.shadowBlur = 0;
-    c.fillStyle = 'rgba(255, 255, 255, 0.34)';
-    c.beginPath();
-    c.moveTo(lava.x, lava.y + 14 + wave);
-    for (let x = 0; x <= lava.width; x += 20) {
-      const crest = Math.sin(game.lavaPhase * 7 + x * 0.06 + lava.x * 0.02) * 6;
-      c.lineTo(lava.x + x, lava.y + 18 + crest);
-    }
-    c.lineTo(lava.x + lava.width, lava.y + lava.height);
-    c.lineTo(lava.x, lava.y + lava.height);
-    c.closePath();
-    c.fill();
-
-    for (let i = 0; i < lava.width; i += 40) {
-      const bubbleX = lava.x + i + 12;
-      const bubbleY = lava.y + 34 + ((game.lavaPhase * 40 + i * 0.5) % (lava.height - 46));
-      c.fillStyle = 'rgba(255, 209, 102, 0.45)';
-      c.beginPath();
-      c.arc(bubbleX, bubbleY - shimmer, 5 + ((i / 40) % 3), 0, Math.PI * 2);
-      c.fill();
+  for (const pit of level.pits) {
+    if (fill.style === 'chasm') {
+      drawChasm(c, pit, fill);
+    } else {
+      drawLiquid(c, game, pit, fill);
     }
   }
 
   c.restore();
+}
+
+function drawChasm(c, pit, fill) {
+  const gradient = c.createLinearGradient(0, pit.y, 0, pit.y + pit.height);
+  gradient.addColorStop(0, fill.edge);
+  gradient.addColorStop(1, fill.deep);
+  c.fillStyle = gradient;
+  c.fillRect(pit.x, pit.y, pit.width, pit.height);
+}
+
+function drawLiquid(c, game, pit, fill) {
+  const intensity = fill.calm ? 0.5 : 1;
+  const wave = Math.sin(game.lavaPhase * 4 + pit.x * 0.01) * 6 * intensity;
+  const shimmer = Math.sin(game.lavaPhase * 6 + pit.width * 0.02) * 4 * intensity;
+
+  c.shadowColor = fill.glow;
+  c.shadowBlur = fill.calm ? 12 : 22;
+  c.fillStyle = fill.deep;
+  c.fillRect(pit.x, pit.y, pit.width, pit.height);
+
+  const gradient = c.createLinearGradient(0, pit.y, 0, pit.y + pit.height);
+  gradient.addColorStop(0, fill.hot);
+  gradient.addColorStop(0.24, fill.surface);
+  gradient.addColorStop(1, fill.deep);
+  c.fillStyle = gradient;
+  c.fillRect(pit.x, pit.y + 12, pit.width, pit.height - 12);
+
+  c.shadowBlur = 0;
+  c.fillStyle = fill.crest;
+  c.beginPath();
+  c.moveTo(pit.x, pit.y + 14 + wave);
+  for (let x = 0; x <= pit.width; x += 20) {
+    const crest = Math.sin(game.lavaPhase * 7 + x * 0.06 + pit.x * 0.02) * 6 * intensity;
+    c.lineTo(pit.x + x, pit.y + 18 + crest);
+  }
+  c.lineTo(pit.x + pit.width, pit.y + pit.height);
+  c.lineTo(pit.x, pit.y + pit.height);
+  c.closePath();
+  c.fill();
+
+  for (let i = 0; i < pit.width; i += 40) {
+    const bubbleX = pit.x + i + 12;
+    const bubbleY = pit.y + 34 + ((game.lavaPhase * 40 + i * 0.5) % (pit.height - 46));
+    c.fillStyle = fill.bubble;
+    c.beginPath();
+    c.arc(bubbleX, bubbleY - shimmer, 5 + ((i / 40) % 3), 0, Math.PI * 2);
+    c.fill();
+  }
 }
 
 export function drawGoal(c, game) {

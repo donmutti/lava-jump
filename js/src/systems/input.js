@@ -1,5 +1,4 @@
-import { setOverlay } from '../dom/overlay.js';
-import { resetPlayer, fullRestart } from './lifecycle.js';
+import { resetPlayer, fullRestart, showLevelIntro, startPlaying } from './lifecycle';
 
 export function attachInput(ctx) {
   const { scene } = ctx;
@@ -14,11 +13,12 @@ export function attachInput(ctx) {
 }
 
 function startPlayingIfNeeded(ctx) {
-  const { game, scene } = ctx;
+  const { game } = ctx;
   if (game.state === 'ready') {
-    game.state = 'playing';
-    setOverlay(scene, game, '', '', false);
-    scene.canvas.focus();
+    showLevelIntro(ctx);
+    ctx.scene.canvas.focus();
+  } else if (game.state === 'levelIntro') {
+    startPlaying(ctx);
   }
 }
 

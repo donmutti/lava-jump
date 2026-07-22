@@ -1,4 +1,4 @@
-import { VIEWPORT_WIDTH, VIEWPORT_HEIGHT } from '../config/constants.js';
+import { VIEWPORT_WIDTH, VIEWPORT_HEIGHT } from '../config/constants';
 
 export function buildScene(root) {
   if (!root) {

@@ -1,6 +1,6 @@
-import { buildScene } from './dom/scene.js';
-import { createInput, createGame } from './core/state.js';
-import { attachInput } from './systems/input.js';
+import { buildScene } from './dom/scene';
+import { createInput, createGame } from './core/state';
+import { attachInput } from './systems/input';
 
 export function createContext(root) {
   const scene = buildScene(root);

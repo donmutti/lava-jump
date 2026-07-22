@@ -1,5 +1,5 @@
-import { VIEWPORT_WIDTH, VIEWPORT_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../config/constants.js';
-import { clamp } from '../core/math.js';
+import { VIEWPORT_WIDTH, VIEWPORT_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../config/constants';
+import { clamp } from '../core/math';
 
 export function updateCamera(ctx) {
   const { game } = ctx;

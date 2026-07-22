@@ -1,5 +1,5 @@
-import { createPlayer } from '../entities/player.js';
-import { LEVELS } from '../config/level.js';
+import { createPlayer } from '../entities/player';
+import { LEVELS } from '../config/level';
 
 export function createInput() {
   return {

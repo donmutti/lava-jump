@@ -1,8 +1,8 @@
-import { PHYSICS, WORLD_WIDTH, WORLD_HEIGHT } from '../config/constants.js';
-import { LEVELS } from '../config/level.js';
-import { clamp, rectsOverlap, rangesOverlap, getPlayerRect } from '../core/math.js';
-import { setOverlay } from '../dom/overlay.js';
-import { triggerDeath, advanceLevel } from './lifecycle.js';
+import { PHYSICS, WORLD_WIDTH, WORLD_HEIGHT } from '../config/constants';
+import { LEVELS } from '../config/level';
+import { clamp, rectsOverlap, rangesOverlap, getPlayerRect } from '../core/math';
+import { setOverlay } from '../dom/overlay';
+import { triggerDeath, advanceLevel } from './lifecycle';
 
 export function updatePlayer(ctx, dt) {
   const { game, input, scene } = ctx;
@@ -64,9 +64,9 @@ export function updatePlayer(ctx, dt) {
   }
 
   const playerRect = getPlayerRect(player);
-  for (const lava of level.lavaPools) {
-    if (rectsOverlap(playerRect, lava)) {
-      triggerDeath(ctx, 'The lava was a little too hot.');
+  for (const pit of level.pits) {
+    if (rectsOverlap(playerRect, pit)) {
+      triggerDeath(ctx, level.pit.deathMessage);
       return;
     }
   }

@@ -33,7 +33,6 @@ The game is split into ES modules under `js/src/` (config, core, dom, systems, r
 - Multiplayer, persistence/save state, or a level editor.
 - Mobile touch controls (pointer only starts the game; movement is keyboard).
 - Audio.
-- Multiple levels (one hardcoded level).
 
 ---
 
@@ -88,7 +87,7 @@ Axis-separated, swept AABB resolution against platform rectangles (in `systems/p
 
 **Death conditions** (checked each update):
 - Falling below `WORLD_HEIGHT + 140` (the abyss).
-- Overlapping any lava pool rectangle.
+- Overlapping any pit rectangle (regardless of the pit's fill type — see §6.3).
 
 **Win condition**: player rectangle overlaps `level.goal`.
 
@@ -96,25 +95,40 @@ Axis-separated, swept AABB resolution against platform rectangles (in `systems/p
 
 ## 6. Levels & progression
 
-The game ships **5 hardcoded levels** of increasing difficulty (level 1 is the original layout). Levels are authored as data in `js/src/config/levels.json` and expanded at load into runtime `level` objects by `config/level.js` (see §6.1). The active level is `LEVELS[game.levelIndex]`; every consumer reads the current level rather than a static import.
+The game ships **5 hardcoded levels** of increasing difficulty, each with its own theme and pit fill (see §6.3). Levels are authored as data in `js/src/config/levels.json` and expanded at load into runtime `level` objects by `config/level.js` (see §6.1). The active level is `LEVELS[game.levelIndex]`; every consumer reads the current level rather than a static import.
 
-Each level object has the same shape as before:
+The five levels: **Sunny Meadow** (field / water), **Poison Thicket** (forest / poison), **Molten Cavern** (cave / lava), **Cliffs of Dawn** (mountain / abyss), **Xen Rift** (alien / plasma).
 
+Each level object has this shape:
+
+- `name`: display name, shown on the HUD and the level-intro screen (§8).
+- `theme`: a `THEME` enum value selecting the background art and palette (§6.3).
+- `pit`: a `PIT` enum value selecting the fill drawn in every pit rectangle and its palette (§6.3).
 - `start`: `{ x, y }` — spawn point for the level.
 - `goal`: `{ x, y, width, height }` — the portal that completes the level.
 - `platforms`: array of `{ x, y, width, height }` rectangles — thick ground slabs plus thin floating ledges.
-- `lavaPools`: array of `{ x, y, width, height }` rectangles — deadly gaps.
+- `pits`: array of `{ x, y, width, height }` rectangles — deadly gaps (all share the level's `pit` fill).
 - `checkpoints`: array of `{ x, y, label, triggerX }` — respawn points, advanced when the player's center x passes `triggerX`. Index 0 is the level `start` (no `triggerX`).
 
 ### 6.1 Storage format
 
-To stay human-readable yet compact, `levels.json` stores every rectangle/point as a **positional number tuple** rather than a keyed object:
+To stay human-readable yet compact, `levels.json` stores every rectangle/point as a **positional number tuple** rather than a keyed object; `name`, `theme`, and `pit` are plain string fields:
 
 - Point → `[x, y]`
 - Rect → `[x, y, width, height]`
 - Checkpoint → `[x, y, label, triggerX]` (index 0 omits `triggerX`)
+- `theme` / `pit` → string keys matching the `THEME` / `PIT` enums (e.g. `"FIELD"`, `"WATER"`)
 
-`config/level.js` exports `LEVELS` (the expanded array of level objects) and a helper `expandLevel(raw)` that maps the tuples back into the `{ x, y, width, height }` / `{ x, y, label, triggerX }` objects the rest of the code consumes — so physics, render, and state logic are unchanged apart from reading `LEVELS[game.levelIndex]`. Webpack imports the `.json` natively; no loader change.
+`config/level.js` exports `LEVELS` (the expanded array of level objects) and a helper `expandLevel(raw)` that maps the tuples back into the `{ x, y, width, height }` / `{ x, y, label, triggerX }` objects the rest of the code consumes, and resolves the `theme`/`pit` strings to their enum descriptors. Webpack imports the `.json` natively; no loader change.
+
+### 6.3 Theming & pit fills
+
+Two enums in `config/theme.js` drive per-level art:
+
+- **`THEME`** selects the background: `FIELD`, `FOREST`, `CAVE`, `MOUNTAIN`, `ALIEN`. Each theme is a descriptor carrying a palette (sky gradient, ridge/mist colors, celestial body) that `drawBackground` reads instead of the global `COLORS`.
+- **`PIT`** selects the fill drawn inside every pit rectangle: `WATER`, `POISON`, `LAVA`, `ABYSS`, `PLASMA`. Each is a descriptor carrying a palette and a draw style. `LAVA`/`WATER`/`POISON`/`PLASMA` render an animated liquid surface (varying palette and calmness); `ABYSS` renders a dark empty chasm with no liquid. All pit fills are equally fatal on overlap — the fill is purely visual plus flavor; it does not change collision or death rules.
+
+`PIT` is deliberately scoped to *falling hazards that fill a rectangle*, not a general hazard concept — future moving threats (e.g. NPC birds) would be a separate model, not a `PIT` value.
 
 ### 6.2 Progression
 
@@ -147,14 +161,17 @@ Created by `createPlayer(x, y)` (in `entities/player.js`):
 
 | State | Meaning | Enter via | Exit to |
 | --- | --- | --- | --- |
-| `ready` | Title overlay shown, awaiting input | `fullRestart()` | `playing` on movement key |
-| `playing` | Simulation running, timer accruing | `startPlayingIfNeeded()` / `resetPlayer()` | `respawning` / `won` |
+| `ready` | Title overlay shown, awaiting input | `fullRestart()` | `levelIntro` on movement key |
+| `levelIntro` | Level-intro overlay (level number + name), awaiting input | `startPlayingIfNeeded()` (from `ready`) / `advanceLevel()` | `playing` on any movement/jump key |
+| `playing` | Simulation running, timer accruing | dismissing the level-intro overlay / `resetPlayer()` | `respawning` / `levelIntro` / `won` |
 | `respawning` | Death overlay, persists until dismissed | `triggerDeath()` | `playing` via `resetPlayer()` on any dismiss key |
 | `won` | Victory overlay (only after the final level) | last-level goal overlap | `ready` via restart |
 
 Tracked stats: `timer` (seconds), `deaths` (respawn count), `levelIndex`, `checkpointIndex`.
 
-Reaching a non-final level's goal does **not** enter `won`; it advances to the next level (see §6.2) while staying in `playing`. Only clearing the final level enters `won`.
+Each level begins with a **level-intro screen** (`levelIntro` state): an overlay showing the level number and name (e.g. "Level 1 — Sunny Meadow"), which waits for a movement/jump keypress before entering `playing`. The world is rendered behind the overlay but the simulation and timer are paused until dismissed. This applies to the first level (after the title) and to every subsequent level reached via `advanceLevel()`.
+
+Reaching a non-final level's goal does **not** enter `won`; it advances to the next level (see §6.2) and shows that level's intro screen (`levelIntro`). Only clearing the final level enters `won`.
 
 `triggerDeath()` increments deaths and shows the "Ouch." overlay. The death overlay **persists until the player presses a key** (it does not auto-dismiss on a timer), so the player has time to read it. Any movement/jump key resumes play by calling `resetPlayer()`, which respawns at the last checkpoint in the current level.
 
@@ -193,16 +210,16 @@ Keyboard-driven, handled by `handleKeyChange`:
 
 `render()` draws each frame in back-to-front order:
 
-1. `drawBackground` — vertical sky gradient, moon with radial glow, two parallax mist bands, three parallax misty-mountain ridge layers, drifting star dots.
+1. `drawBackground` — theme-driven (§6.3): vertical sky gradient, a celestial body with radial glow, two parallax mist bands, three parallax ridge layers, and drifting particles. Colors come from the active level's `THEME` descriptor.
 2. `drawPlatforms` — face + lit top edge + highlight strip (camera-translated).
-3. `drawLava` — glowing deep base, vertical gradient, animated wave crest, and rising bubble particles driven by `game.lavaPhase`. Rendered in a hot red/orange palette.
+3. `drawPits` — dispatches on the active level's `PIT` fill (§6.3): liquid fills (`WATER`/`POISON`/`LAVA`/`PLASMA`) draw a glowing base, vertical gradient, animated wave crest, and rising bubbles driven by `game.lavaPhase`, each in its own palette; `ABYSS` draws a dark empty chasm with no liquid.
 4. `drawGoal` — pulsing portal (glow ellipse, ring, white core).
 5. `drawPlayer` — the figure with facing-dependent accent.
 6. `drawForegroundHints` — a faint on-canvas tip.
 
 - Parallax layers translate by a fraction of `game.camera.x`; gameplay layers translate by the full camera offset.
-- Palette centralized in the `COLORS` constant. Lava uses a hot red/orange palette (`#ff5a1f` surface, `#ffd166` crest highlight, `#7a1500` deep base).
-- The background depicts layered misty mountain ridges receding into haze (three parallax `mountainFar/Mid/Near` layers), not a pine forest.
+- The base palette lives in the `COLORS` constant; per-level background and pit-fill palettes live in the `THEME` / `PIT` descriptors in `config/theme.js`.
+- `game.lavaPhase` is the shared animation clock for all pit liquids (name retained for continuity), advancing every frame regardless of state.
 
 The DOM HUD (`updateHud`) is separate from canvas rendering and shows current checkpoint, respawn count, elapsed time, and a status message.
 
@@ -260,4 +277,4 @@ Ideas captured for later; not yet specified or scheduled.
 
 - **Checkpoint semaphore with finger signs** (à la the DOS game "Prehistoric"): each checkpoint shows a semaphore with two finger-sign hands. Before the checkpoint is reached, the left hand points left and the right hand points down at the ground. Once reached, the left hand points down at the ground and the right hand points right (toward the way forward).
 - **Collectible items granting a super jump**: apples, cakes, and similar edibles scattered sparsely across the levels (2–3 per level). Collecting one grants a single super jump — a double-jump that lets the player jump again while already airborne (one extra jump per item collected).
-- **Per-level theming (background + hazard)**: each level gets its own distinct art style, with the pit hazard varying per theme (lava is not universal). Proposed progression: (1) a merry field in daylight/dusk with a sun, where pits hold **water** instead of lava; (2) late evening after dusk in a dark forest, with pits of **poisonous swampy water**; (3) a **cave** with **lava** pits; (4) mountain pinnacles at **dawn** with drifting clouds and **empty pits** (no water or lava — just a fatal fall); (5) an **alien world** à la Half-Life's Xen. Requires generalizing the hazard model beyond "lavaPools" (e.g. typed hazards) and per-level background/palette selection.
+- **Rename `package.json` `name` from `lava-leap` to `lava-jump`**: align the npm identifier with the rebranded product name and repo directory. Currently kept as `lava-leap` (see the note under §1's title); revisit whether the package id should follow the rename.
