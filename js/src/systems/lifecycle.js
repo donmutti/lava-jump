@@ -13,7 +13,7 @@ export function startCutscene(ctx, name) {
   const { game, scene } = ctx;
   game.state = name;
   game.cutscene = { name, t: 0 };
-  setOverlay(scene, game, '', 'Press any key to skip.', true, true);
+  setOverlay(scene, game, '', '', 'Press any key to skip.', true, true);
 }
 
 export function advanceCutscene(ctx, dt) {
@@ -36,7 +36,7 @@ export function finishCutscene(ctx) {
     game.state = 'won';
     const timeLeft = Math.max(0, TIME_LIMIT - game.timer);
     game.message = `You saved the Cow with ${timeLeft.toFixed(1)}s to spare.`;
-    setOverlay(scene, game, 'You made it!', `${game.message} Press R to play again.`, true);
+    setOverlay(scene, game, 'You made it!', game.message, 'Press R to play again.', true);
   } else {
     showLevelIntro(ctx);
   }
@@ -51,7 +51,7 @@ export function resetPlayer(ctx) {
   game.camera.y = clamp(level.start.y - VIEWPORT_HEIGHT * 0.58, 0, WORLD_HEIGHT - VIEWPORT_HEIGHT);
   game.state = 'playing';
   game.message = `Restarted ${level.name}.`;
-  setOverlay(scene, game, '', '', false);
+  setOverlay(scene, game, '', '', '', false);
   driveInHud(scene);
   scene.canvas.focus();
 }
@@ -71,13 +71,13 @@ export function showLevelIntro(ctx) {
   const level = LEVELS[game.levelIndex];
   game.state = 'levelIntro';
   game.message = `Level ${game.levelIndex + 1}/${LEVELS.length}: ${level.name}.`;
-  setOverlay(scene, game, `Level ${game.levelIndex + 1}/${LEVELS.length}\n${level.name}`, 'Press any movement key to begin.', true);
+  setOverlay(scene, game, `Level ${game.levelIndex + 1}/${LEVELS.length}\n${level.name}`, '', 'Press any movement key to begin.', true);
 }
 
 export function startPlaying(ctx) {
   const { game, scene } = ctx;
   game.state = 'playing';
-  setOverlay(scene, game, '', '', false);
+  setOverlay(scene, game, '', '', '', false);
   driveInHud(scene);
   scene.canvas.focus();
 }
@@ -110,7 +110,7 @@ export function triggerDeath(ctx, message) {
   game.deaths += 1;
   game.state = 'respawning';
   game.message = message;
-  setOverlay(scene, game, 'Ouch.', `${message} Press any movement key to restart the level.`, true);
+  setOverlay(scene, game, 'Ouch.', message, 'Press any movement key to restart the level.', true);
 }
 
 export function triggerTimeUp(ctx) {
@@ -121,5 +121,5 @@ export function triggerTimeUp(ctx) {
 
   game.state = 'timeUp';
   game.message = 'The aliens got away with the Cow.';
-  setOverlay(scene, game, 'Out of time.', `${game.message} Press R to try again.`, true);
+  setOverlay(scene, game, 'Out of time.', game.message, 'Press R to try again.', true);
 }

@@ -44,7 +44,10 @@ export function buildScene(root) {
 
   const overlayTitle = document.createElement('h2');
 
-  overlayCard.append(overlayTitle);
+  const overlayBody = document.createElement('p');
+  overlayBody.className = 'overlay-body';
+
+  overlayCard.append(overlayTitle, overlayBody);
 
   const overlayMessage = document.createElement('p');
   overlayMessage.className = 'overlay-message';
@@ -67,6 +70,7 @@ export function buildScene(root) {
     ctx,
     overlay,
     overlayTitle,
+    overlayBody,
     overlayMessage,
     hud,
     levelStat,
