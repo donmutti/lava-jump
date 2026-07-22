@@ -141,6 +141,10 @@ export function drawPlayer(c, game) {
   c.fillRect(6, 8, 26, 30);
   c.fillRect(10, 0, 18, 16);
 
+  // Chicken comb — same red as the cutscene chicken's crest.
+  c.fillStyle = '#e2483a';
+  c.fillRect(14, -4, 10, 4);
+
   c.fillStyle = COLORS.playerAccent;
   c.fillRect(player.facing === 1 ? 23 : 9, 12, 6, 8);
 
