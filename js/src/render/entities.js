@@ -1,7 +1,8 @@
 import { VIEWPORT_HEIGHT, COLORS } from '../config/constants.js';
-import { level } from '../config/level.js';
+import { LEVELS } from '../config/level.js';
 
 export function drawPlatforms(c, game) {
+  const level = LEVELS[game.levelIndex];
   c.save();
   c.translate(-game.camera.x, -game.camera.y);
 
@@ -19,6 +20,7 @@ export function drawPlatforms(c, game) {
 }
 
 export function drawLava(c, game) {
+  const level = LEVELS[game.levelIndex];
   c.save();
   c.translate(-game.camera.x, -game.camera.y);
 
@@ -64,6 +66,7 @@ export function drawLava(c, game) {
 }
 
 export function drawGoal(c, game) {
+  const level = LEVELS[game.levelIndex];
   c.save();
   c.translate(-game.camera.x, -game.camera.y);
 

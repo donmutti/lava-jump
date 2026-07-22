@@ -1,11 +1,12 @@
 import { PHYSICS, WORLD_WIDTH, WORLD_HEIGHT } from '../config/constants.js';
-import { level } from '../config/level.js';
+import { LEVELS } from '../config/level.js';
 import { clamp, rectsOverlap, rangesOverlap, getPlayerRect } from '../core/math.js';
 import { setOverlay } from '../dom/overlay.js';
-import { triggerDeath } from './lifecycle.js';
+import { triggerDeath, advanceLevel } from './lifecycle.js';
 
 export function updatePlayer(ctx, dt) {
   const { game, input, scene } = ctx;
+  const level = LEVELS[game.levelIndex];
   const player = game.player;
   const direction = Number(input.right) - Number(input.left);
   const targetVelocity = direction * PHYSICS.moveSpeed;
@@ -48,8 +49,8 @@ export function updatePlayer(ctx, dt) {
   const gravityScale = input.down && !player.onGround ? PHYSICS.fastFallGravityScale : 1;
   player.vy = Math.min(player.vy + PHYSICS.gravity * gravityScale * dt, PHYSICS.maxFallSpeed);
 
-  movePlayerHorizontally(player, dt);
-  movePlayerVertically(player, dt);
+  movePlayerHorizontally(player, dt, level);
+  movePlayerVertically(player, dt, level);
 
   if (player.onGround && Math.abs(player.vx) > 12) {
     player.walkPhase += Math.abs(player.vx) * dt * 0.028;
@@ -71,9 +72,14 @@ export function updatePlayer(ctx, dt) {
   }
 
   if (rectsOverlap(playerRect, level.goal)) {
-    game.state = 'won';
-    game.message = `You escaped the lava in ${game.timer.toFixed(1)}s with ${game.deaths} respawns.`;
-    setOverlay(scene, game, 'You made it!', `${game.message} Press R to play again.`, true);
+    if (game.levelIndex < LEVELS.length - 1) {
+      advanceLevel(ctx);
+    } else {
+      game.state = 'won';
+      game.message = `You cleared all ${LEVELS.length} levels in ${game.timer.toFixed(1)}s with ${game.deaths} respawns.`;
+      setOverlay(scene, game, 'You made it!', `${game.message} Press R to play again.`, true);
+    }
+    return;
   }
 
   updateCheckpoints(game);
@@ -81,18 +87,16 @@ export function updatePlayer(ctx, dt) {
 
 function updateCheckpoints(game) {
   const playerCenterX = game.player.x + game.player.width / 2;
-  if (playerCenterX > 1180 && game.checkpointIndex < 1) {
-    game.checkpointIndex = 1;
-    game.message = 'Checkpoint reached: Midway.';
-  }
-
-  if (playerCenterX > 2090 && game.checkpointIndex < 2) {
-    game.checkpointIndex = 2;
-    game.message = 'Checkpoint reached: Final stretch.';
+  for (let i = game.checkpointIndex + 1; i < game.checkpoints.length; i += 1) {
+    const checkpoint = game.checkpoints[i];
+    if (checkpoint.triggerX != null && playerCenterX > checkpoint.triggerX) {
+      game.checkpointIndex = i;
+      game.message = `Checkpoint reached: ${checkpoint.label}.`;
+    }
   }
 }
 
-function movePlayerHorizontally(player, dt) {
+function movePlayerHorizontally(player, dt, level) {
   const previousX = player.x;
   player.x += player.vx * dt;
   player.x = clamp(player.x, 0, WORLD_WIDTH - player.width);
@@ -121,7 +125,7 @@ function movePlayerHorizontally(player, dt) {
   }
 }
 
-function movePlayerVertically(player, dt) {
+function movePlayerVertically(player, dt, level) {
   const previousY = player.y;
   const previousBottom = previousY + player.height;
   const previousTop = previousY;

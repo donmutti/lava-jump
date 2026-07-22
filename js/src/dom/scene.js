@@ -38,7 +38,7 @@ export function buildScene(root) {
   canvas.className = 'game-canvas';
   canvas.width = VIEWPORT_WIDTH * dpr;
   canvas.height = VIEWPORT_HEIGHT * dpr;
-  canvas.setAttribute('aria-label', 'Lava Leap platformer');
+  canvas.setAttribute('aria-label', 'Lava Jump platformer');
   canvas.setAttribute('role', 'img');
   canvas.tabIndex = 0;
 

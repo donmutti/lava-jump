@@ -1,4 +1,4 @@
-# Lava Leap
+# Lava Jump
 
 A small canvas-based browser platformer built with vanilla JavaScript.
 

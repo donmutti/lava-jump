@@ -1,8 +1,8 @@
-# Lava Leap — Technical Specification
+# Lava Jump — Technical Specification
 
 A small canvas-based browser platformer built with vanilla JavaScript. The player sprints and jumps across a molten obstacle course to reach a glowing portal, respawning at checkpoints on death.
 
-> Note: the repository directory is `lava-jump`, but the product name is **Lava Leap** (see `package.json`, `index.html`, `README.md`).
+> Note: the product name is **Lava Jump**, matching the repository directory `lava-jump`. The `package.json` `name` field remains the npm identifier `lava-leap` (a package id, not user-facing branding).
 
 ---
 
@@ -94,24 +94,34 @@ Axis-separated, swept AABB resolution against platform rectangles (in `systems/p
 
 ---
 
-## 6. Level definition
+## 6. Levels & progression
 
-A single hardcoded `level` object:
+The game ships **5 hardcoded levels** of increasing difficulty (level 1 is the original layout). Levels are authored as data in `js/src/config/levels.json` and expanded at load into runtime `level` objects by `config/level.js` (see §6.1). The active level is `LEVELS[game.levelIndex]`; every consumer reads the current level rather than a static import.
 
-- `start`: `{ x: 80, y: 670 }` — initial spawn.
-- `goal`: `{ x: 2620, y: 390, width: 70, height: 110 }` — the portal.
-- `platforms`: 17 rectangles — 6 thick ground slabs (`height: 140`) plus 11 thin floating ledges (`height: 18`).
-- `lavaPools`: 5 rectangles filling gaps between ground slabs (`height: 110`).
+Each level object has the same shape as before:
 
-**Checkpoints** (on `game.checkpoints`, advanced by `updateCheckpoints`):
+- `start`: `{ x, y }` — spawn point for the level.
+- `goal`: `{ x, y, width, height }` — the portal that completes the level.
+- `platforms`: array of `{ x, y, width, height }` rectangles — thick ground slabs plus thin floating ledges.
+- `lavaPools`: array of `{ x, y, width, height }` rectangles — deadly gaps.
+- `checkpoints`: array of `{ x, y, label, triggerX }` — respawn points, advanced when the player's center x passes `triggerX`. Index 0 is the level `start` (no `triggerX`).
 
-| Index | Label | Position | Trigger (player center x >) |
-| --- | --- | --- | --- |
-| 0 | Start | (80, 670) | — (initial) |
-| 1 | Midway | (1090, 680) | 1180 |
-| 2 | Final stretch | (2020, 370) | 2090 |
+### 6.1 Storage format
 
-On death, the player respawns at the highest reached checkpoint.
+To stay human-readable yet compact, `levels.json` stores every rectangle/point as a **positional number tuple** rather than a keyed object:
+
+- Point → `[x, y]`
+- Rect → `[x, y, width, height]`
+- Checkpoint → `[x, y, label, triggerX]` (index 0 omits `triggerX`)
+
+`config/level.js` exports `LEVELS` (the expanded array of level objects) and a helper `expandLevel(raw)` that maps the tuples back into the `{ x, y, width, height }` / `{ x, y, label, triggerX }` objects the rest of the code consumes — so physics, render, and state logic are unchanged apart from reading `LEVELS[game.levelIndex]`. Webpack imports the `.json` natively; no loader change.
+
+### 6.2 Progression
+
+- `game.levelIndex` tracks the current level (starts at 0).
+- On reaching a level's goal: if a next level exists, advance (`levelIndex += 1`), respawn the player at the new level's `start`, reset checkpoints to that level, and continue playing. If it was the **last** level, transition to `won`.
+- `timer` and `deaths` **carry across levels** — they are whole-run totals, not per-level. `fullRestart()` resets `levelIndex` to 0 along with the run stats.
+- On death, the player respawns at the highest reached checkpoint **within the current level**.
 
 ---
 
@@ -140,11 +150,13 @@ Created by `createPlayer(x, y)` (in `entities/player.js`):
 | `ready` | Title overlay shown, awaiting input | `fullRestart()` | `playing` on movement key |
 | `playing` | Simulation running, timer accruing | `startPlayingIfNeeded()` / `resetPlayer()` | `respawning` / `won` |
 | `respawning` | Death overlay, persists until dismissed | `triggerDeath()` | `playing` via `resetPlayer()` on any dismiss key |
-| `won` | Victory overlay | goal overlap | `ready` via restart |
+| `won` | Victory overlay (only after the final level) | last-level goal overlap | `ready` via restart |
 
-Tracked stats: `timer` (seconds), `deaths` (respawn count), `checkpointIndex`.
+Tracked stats: `timer` (seconds), `deaths` (respawn count), `levelIndex`, `checkpointIndex`.
 
-`triggerDeath()` increments deaths and shows the "Ouch." overlay. The death overlay **persists until the player presses a key** (it does not auto-dismiss on a timer), so the player has time to read it. Any movement/jump key resumes play by calling `resetPlayer()`, which respawns at the last checkpoint.
+Reaching a non-final level's goal does **not** enter `won`; it advances to the next level (see §6.2) while staying in `playing`. Only clearing the final level enters `won`.
+
+`triggerDeath()` increments deaths and shows the "Ouch." overlay. The death overlay **persists until the player presses a key** (it does not auto-dismiss on a timer), so the player has time to read it. Any movement/jump key resumes play by calling `resetPlayer()`, which respawns at the last checkpoint in the current level.
 
 ---
 
@@ -234,7 +246,17 @@ Bootstrapped by `fullRestart()` then `requestAnimationFrame(tick)`.
 
 ## 15. Known characteristics & constraints
 
-- Single hardcoded level; no progression beyond the one goal.
+- 5 hardcoded levels; no level editor or procedural generation.
 - Keyboard-only gameplay; not playable on touch devices.
 - No audio, no persistence, no scoring leaderboard.
 - Fixed logical resolution (960×540) scaled by CSS; DPR-aware backing store is applied once on load, so a mid-session device-pixel-ratio change is not re-detected.
+
+---
+
+## 16. Parking Lot
+
+Ideas captured for later; not yet specified or scheduled.
+
+- **Checkpoint semaphore with finger signs** (à la the DOS game "Prehistoric"): each checkpoint shows a semaphore with two finger-sign hands. Before the checkpoint is reached, the left hand points left and the right hand points down at the ground. Once reached, the left hand points down at the ground and the right hand points right (toward the way forward).
+- **Collectible items granting a super jump**: apples, cakes, and similar edibles scattered sparsely across the levels (2–3 per level). Collecting one grants a single super jump — a double-jump that lets the player jump again while already airborne (one extra jump per item collected).
+- **Per-level theming (background + hazard)**: each level gets its own distinct art style, with the pit hazard varying per theme (lava is not universal). Proposed progression: (1) a merry field in daylight/dusk with a sun, where pits hold **water** instead of lava; (2) late evening after dusk in a dark forest, with pits of **poisonous swampy water**; (3) a **cave** with **lava** pits; (4) mountain pinnacles at **dawn** with drifting clouds and **empty pits** (no water or lava — just a fatal fall); (5) an **alien world** à la Half-Life's Xen. Requires generalizing the hazard model beyond "lavaPools" (e.g. typed hazards) and per-level background/palette selection.
