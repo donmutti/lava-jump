@@ -217,6 +217,11 @@ body {
   backdrop-filter: blur(6px);
 }
 
+.hud-level-index {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .canvas-shell {
   position: relative;
   border-radius: 18px;

@@ -2,7 +2,10 @@ import { LEVELS } from '../config/level';
 import { TIME_LIMIT } from '../config/constants';
 
 export function updateHud(scene, game) {
-  scene.levelStat.textContent = `Level ${game.levelIndex + 1}/${LEVELS.length}: ${LEVELS[game.levelIndex].name}`;
+  const index = document.createElement('span');
+  index.className = 'hud-level-index';
+  index.textContent = `${game.levelIndex + 1}/${LEVELS.length}`;
+  scene.levelStat.replaceChildren(index, ` ${LEVELS[game.levelIndex].name}`);
   scene.timeStat.textContent = formatTimeLeft(TIME_LIMIT - game.timer);
 }
 
