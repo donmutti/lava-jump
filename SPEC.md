@@ -63,7 +63,6 @@ Defined in the `PHYSICS` constant:
 | `jumpVelocity` | 840 | Upward launch velocity (px/s) |
 | `maxFallSpeed` | 1200 | Terminal fall velocity (px/s) |
 | `airControl` | 0.92 | Multiplier on airborne acceleration |
-| `fastFallGravityScale` | 1.45 | Gravity multiplier while holding down midair |
 
 **Movement model**
 - Horizontal velocity approaches a target (`direction * moveSpeed`) using acceleration-limited steps: `2600` px/s² on ground, `1700 * airControl` airborne.
@@ -133,6 +132,7 @@ Two enums in `config/theme.js` drive per-level art:
 - `game.levelIndex` tracks the current level (starts at 0).
 - On reaching a level's goal: if a next level exists, advance (`levelIndex += 1`), spawn the player at the new level's `start`, and show its intro screen. If it was the **last** level, transition to `won`.
 - `timer` and `deaths` **carry across levels** — they are whole-run totals, not per-level. `fullRestart()` resets `levelIndex` to 0 along with the run stats.
+- The run is a **countdown against a fixed 5-minute (300s) budget** (`TIME_LIMIT`). `timer` accrues while `playing`; the HUD shows the remaining time (`TIME_LIMIT - timer`) as `MM:SS` (e.g. `04:59`). When `timer` reaches `TIME_LIMIT` mid-play, the run is lost immediately (`timeUp` game-over) — the Cow is not saved. The countdown pauses during level-intro overlays, death overlays, and cutscenes.
 - On death, the player respawns at the current level's `start` — there are no mid-level checkpoints; each death costs the whole level.
 
 ---
@@ -165,8 +165,9 @@ Created by `createPlayer(x, y)` (in `entities/player.js`):
 | `respawning` | Death overlay, persists until dismissed | `triggerDeath()` | `playing` via `resetPlayer()` on any dismiss key |
 | `ending` | Closing cutscene (letterboxed), the happy return home | final-level goal overlap | `won` when the cutscene finishes or is skipped |
 | `won` | Victory overlay (only after the ending cutscene) | ending cutscene finishing | `ready` via restart |
+| `timeUp` | Time-out game-over overlay | `timer` reaching `TIME_LIMIT` while `playing` | `ready` via restart |
 
-Tracked stats: `timer` (seconds), `deaths` (respawn count), `levelIndex`.
+Tracked stats: `timer` (seconds elapsed, counts down from `TIME_LIMIT` for display), `deaths` (respawn count), `levelIndex`.
 
 Each level begins with a **level-intro screen** (`levelIntro` state): an overlay showing the level position and name (e.g. "Level 1/5: Sunny Meadow"), which waits for a movement/jump keypress before entering `playing`. The world is rendered behind the overlay but the simulation and timer are paused until dismissed. This applies to the first level (reached when the intro cutscene finishes) and to every subsequent level reached via `advanceLevel()`.
 
@@ -176,7 +177,7 @@ Reaching a non-final level's goal does **not** enter `won`; it advances to the n
 
 ### 8.1 Cutscenes
 
-Two scripted, time-driven cutscenes bracket the game: an `intro` (played once at `fullRestart`, before the first level) and an `ending` (played after clearing the final level, before the `won` overlay). Both are letterboxed — black cinematic bars at the top and bottom of the canvas — and both advance on elapsed time (`dt`), not the simulation. `game.cutscene` holds `{ name, t }` where `name` is `'intro' | 'ending'` and `t` is seconds elapsed. When `t` reaches the cutscene's duration, or the player presses any key, the cutscene finishes and hands off to the next state (`intro` → `levelIntro` for level 1, `ending` → `won`). There is no separate title screen; the intro cutscene serves as the opening. The overlay DOM is hidden during cutscenes; everything is drawn on the canvas by `render/cutscene.js`. The narrative content (chicken, cow, UFO abduction, sunset homecoming) is layered on later; the scaffold renders only the letterbox bars.
+Two scripted, time-driven cutscenes bracket the game: an `intro` (played once at `fullRestart`, before the first level) and an `ending` (played after clearing the final level, before the `won` overlay). Both are letterboxed — black cinematic bars at the top and bottom of the canvas — and both advance on elapsed time (`dt`), not the simulation. `game.cutscene` holds `{ name, t }` where `name` is `'intro' | 'ending'` and `t` is seconds elapsed. When `t` reaches the cutscene's duration, or the player presses any key, the cutscene finishes and hands off to the next state (`intro` → `levelIntro` for level 1, `ending` → `won`). There is no separate title screen; the intro cutscene serves as the opening. The letterbox bars and stage are drawn on the canvas by `render/cutscene.js`; the "Press any key to skip." hint is shown via the DOM overlay in "bare" mode (card hidden, only the bottom-centered message), so it shares styling and position with the level-intro "Press any movement key to begin." prompt. The narrative content (chicken, cow, UFO abduction, sunset homecoming) is layered on later; the scaffold renders only the letterbox bars.
 
 ---
 
@@ -189,7 +190,6 @@ Keyboard-driven, handled by `handleKeyChange`:
 | `A` / `←` | Move left |
 | `D` / `→` | Move right |
 | `W` / `↑` / `Space` | Jump (buffers a jump on press) |
-| `S` / `↓` | Fast fall (airborne) |
 | `R` | Full restart |
 | `Enter` | Restart + start (when not playing) |
 
@@ -218,13 +218,12 @@ Keyboard-driven, handled by `handleKeyChange`:
 3. `drawPits` — dispatches on the active level's `PIT` fill (§6.3): liquid fills (`WATER`/`POISON`/`LAVA`/`PLASMA`) draw a glowing base, vertical gradient, animated wave crest, and rising bubbles driven by `game.lavaPhase`, each in its own palette; `ABYSS` draws a dark empty chasm with no liquid.
 4. `drawGoal` — pulsing portal (glow ellipse, ring, white core).
 5. `drawPlayer` — the figure with facing-dependent accent.
-6. `drawForegroundHints` — a faint on-canvas tip.
 
 - Parallax layers translate by a fraction of `game.camera.x`; gameplay layers translate by the full camera offset.
 - The base palette lives in the `COLORS` constant; per-level background and pit-fill palettes live in the `THEME` / `PIT` descriptors in `config/theme.js`.
 - `game.lavaPhase` is the shared animation clock for all pit liquids (name retained for continuity), advancing every frame regardless of state.
 
-The DOM HUD (`updateHud`) is separate from canvas rendering and shows the current level position and name (`Level N/total: name`) and elapsed time.
+The DOM HUD (`updateHud`) is separate from canvas rendering and shows the current level position and name (`Level N/total: name`, left-aligned) and the remaining time (`MM:SS`, right-aligned).
 
 ---
 
@@ -280,4 +279,3 @@ Ideas captured for later; not yet specified or scheduled.
 
 - **Collectible items granting a super jump**: apples, cakes, and similar edibles scattered sparsely across the levels (2–3 per level). Collecting one grants a single super jump — a double-jump that lets the player jump again while already airborne (one extra jump per item collected).
 - **Rename `package.json` `name` from `lava-leap` to `lava-jump`**: align the npm identifier with the rebranded product name and repo directory. Currently kept as `lava-leap` (see the note under §1's title); revisit whether the package id should follow the rename.
-- **Remove the `S` / `↓` fast-fall action**: drop the fast-fall input and its `fastFallGravityScale` physics; simplify controls to move + jump only. Requires updating §9 (input table), the physics gravity scaling, the instructions line in `index.html`, and the fast-fall foreground hint.

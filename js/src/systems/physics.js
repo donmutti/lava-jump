@@ -45,8 +45,7 @@ export function updatePlayer(ctx, dt) {
     game.message = 'Nice jump.';
   }
 
-  const gravityScale = input.down && !player.onGround ? PHYSICS.fastFallGravityScale : 1;
-  player.vy = Math.min(player.vy + PHYSICS.gravity * gravityScale * dt, PHYSICS.maxFallSpeed);
+  player.vy = Math.min(player.vy + PHYSICS.gravity * dt, PHYSICS.maxFallSpeed);
 
   movePlayerHorizontally(player, dt, level);
   movePlayerVertically(player, dt, level);

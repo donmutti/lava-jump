@@ -1,4 +1,4 @@
-import { VIEWPORT_WIDTH, VIEWPORT_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../config/constants';
+import { VIEWPORT_WIDTH, VIEWPORT_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT, TIME_LIMIT } from '../config/constants';
 import { LEVELS } from '../config/level';
 import { createPlayer } from '../entities/player';
 import { clamp } from '../core/math';
@@ -13,7 +13,7 @@ export function startCutscene(ctx, name) {
   const { game, scene } = ctx;
   game.state = name;
   game.cutscene = { name, t: 0 };
-  setOverlay(scene, game, '', '', false);
+  setOverlay(scene, game, '', 'Press any key to skip.', true, true);
 }
 
 export function advanceCutscene(ctx, dt) {
@@ -34,7 +34,8 @@ export function finishCutscene(ctx) {
 
   if (name === 'ending') {
     game.state = 'won';
-    game.message = `You cleared all ${LEVELS.length} levels in ${game.timer.toFixed(1)}s with ${game.deaths} respawns.`;
+    const timeLeft = Math.max(0, TIME_LIMIT - game.timer);
+    game.message = `You saved the Cow with ${timeLeft.toFixed(1)}s to spare.`;
     setOverlay(scene, game, 'You made it!', `${game.message} Press R to play again.`, true);
   } else {
     showLevelIntro(ctx);
@@ -70,7 +71,7 @@ export function showLevelIntro(ctx) {
   const level = LEVELS[game.levelIndex];
   game.state = 'levelIntro';
   game.message = `Level ${game.levelIndex + 1}/${LEVELS.length}: ${level.name}.`;
-  setOverlay(scene, game, `Level ${game.levelIndex + 1}/${LEVELS.length}: ${level.name}`, 'Press any movement key to begin.', true);
+  setOverlay(scene, game, `Level ${game.levelIndex + 1}/${LEVELS.length}\n${level.name}`, 'Press any movement key to begin.', true);
 }
 
 export function startPlaying(ctx) {
@@ -110,4 +111,15 @@ export function triggerDeath(ctx, message) {
   game.state = 'respawning';
   game.message = message;
   setOverlay(scene, game, 'Ouch.', `${message} Press any movement key to restart the level.`, true);
+}
+
+export function triggerTimeUp(ctx) {
+  const { game, scene } = ctx;
+  if (game.state !== 'playing') {
+    return;
+  }
+
+  game.state = 'timeUp';
+  game.message = 'The aliens got away with the Cow.';
+  setOverlay(scene, game, 'Out of time.', `${game.message} Press R to try again.`, true);
 }

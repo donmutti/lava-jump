@@ -32,7 +32,7 @@ function handleKeyChange(ctx, event, pressed) {
   const { game, input } = ctx;
   const key = event.key.toLowerCase();
 
-  if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright', ' '].includes(key)) {
+  if (['w', 'a', 'd', 'arrowup', 'arrowleft', 'arrowright', ' '].includes(key)) {
     event.preventDefault();
   }
 
@@ -41,7 +41,7 @@ function handleKeyChange(ctx, event, pressed) {
     return;
   }
 
-  if (pressed && ['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright'].includes(key)) {
+  if (pressed && ['w', 'a', 'd', 'arrowup', 'arrowleft', 'arrowright'].includes(key)) {
     if (game.state === 'respawning') {
       resetPlayer(ctx);
     } else {
@@ -55,10 +55,6 @@ function handleKeyChange(ctx, event, pressed) {
 
   if (key === 'd' || key === 'arrowright') {
     input.right = pressed;
-  }
-
-  if (key === 's' || key === 'arrowdown') {
-    input.down = pressed;
   }
 
   if (key === 'w' || key === 'arrowup' || key === ' ') {

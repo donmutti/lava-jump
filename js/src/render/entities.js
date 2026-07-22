@@ -1,4 +1,4 @@
-import { VIEWPORT_HEIGHT, COLORS } from '../config/constants';
+import { COLORS } from '../config/constants';
 import { LEVELS } from '../config/level';
 
 export function drawPlatforms(c, game) {
@@ -156,13 +156,5 @@ export function drawPlayer(c, game) {
   c.fillRect(14, 7, 3, 3);
   c.fillRect(21, 7, 3, 3);
 
-  c.restore();
-}
-
-export function drawForegroundHints(c) {
-  c.save();
-  c.fillStyle = 'rgba(255, 255, 255, 0.08)';
-  c.font = '600 15px Inter, sans-serif';
-  c.fillText('Tip: Hold S in the air for a fast fall.', 20, VIEWPORT_HEIGHT - 20);
   c.restore();
 }

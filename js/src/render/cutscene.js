@@ -13,7 +13,6 @@ export function renderCutscene(c, game) {
   c.fillRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
 
   drawLetterbox(c, scene.t);
-  drawSkipHint(c, scene.t);
 }
 
 function drawLetterbox(c, t) {
@@ -24,15 +23,3 @@ function drawLetterbox(c, t) {
   c.fillRect(0, VIEWPORT_HEIGHT - h, VIEWPORT_WIDTH, h);
 }
 
-function drawSkipHint(c, t) {
-  const alpha = Math.max(0, Math.min(0.5, (t - 0.6) * 0.8));
-  if (alpha <= 0) {
-    return;
-  }
-  c.save();
-  c.fillStyle = `rgba(246, 242, 255, ${alpha})`;
-  c.font = '600 13px Inter, sans-serif';
-  c.textAlign = 'right';
-  c.fillText('Press any key to skip', VIEWPORT_WIDTH - 20, VIEWPORT_HEIGHT - 22);
-  c.restore();
-}

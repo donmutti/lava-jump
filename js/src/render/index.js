@@ -1,5 +1,5 @@
 import { drawBackground } from './background';
-import { drawPlatforms, drawPits, drawGoal, drawPlayer, drawForegroundHints } from './entities';
+import { drawPlatforms, drawPits, drawGoal, drawPlayer } from './entities';
 import { renderCutscene } from './cutscene';
 
 export function render(c, game) {
@@ -13,5 +13,4 @@ export function render(c, game) {
   drawPits(c, game);
   drawGoal(c, game);
   drawPlayer(c, game);
-  drawForegroundHints(c);
 }

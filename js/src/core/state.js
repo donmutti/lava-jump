@@ -6,7 +6,6 @@ export function createInput() {
     left: false,
     right: false,
     up: false,
-    down: false,
   };
 }
 

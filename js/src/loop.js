@@ -1,8 +1,9 @@
 import {updatePlayer} from './systems/physics';
 import {updateCamera} from './systems/camera';
-import {advanceCutscene} from './systems/lifecycle';
+import {advanceCutscene, triggerTimeUp} from './systems/lifecycle';
 import {updateHud} from './dom/hud';
 import {render} from './render';
+import {TIME_LIMIT} from './config/constants';
 
 export function startLoop(ctx) {
   const {game, scene} = ctx;
@@ -16,8 +17,13 @@ export function startLoop(ctx) {
       advanceCutscene(ctx, dt);
     } else if (game.state === 'playing') {
       game.timer += dt;
-      updatePlayer(ctx, dt);
-      updateCamera(ctx);
+      if (game.timer >= TIME_LIMIT) {
+        game.timer = TIME_LIMIT;
+        triggerTimeUp(ctx);
+      } else {
+        updatePlayer(ctx, dt);
+        updateCamera(ctx);
+      }
     }
 
     if (!game.cutscene) {

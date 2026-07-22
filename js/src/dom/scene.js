@@ -43,10 +43,13 @@ export function buildScene(root) {
   overlayCard.className = 'overlay-card';
 
   const overlayTitle = document.createElement('h2');
-  const overlayMessage = document.createElement('p');
 
-  overlayCard.append(overlayTitle, overlayMessage);
-  overlay.append(overlayCard);
+  overlayCard.append(overlayTitle);
+
+  const overlayMessage = document.createElement('p');
+  overlayMessage.className = 'overlay-message';
+
+  overlay.append(overlayCard, overlayMessage);
   canvasShell.append(canvas, hud, overlay);
   frame.append(canvasShell);
   root.append(frame);

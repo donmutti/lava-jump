@@ -3,13 +3,14 @@ export const VIEWPORT_HEIGHT = 540;
 export const WORLD_WIDTH = 2800;
 export const WORLD_HEIGHT = 900;
 
+export const TIME_LIMIT = 300;
+
 export const PHYSICS = {
   gravity: 2200,
   moveSpeed: 340,
   jumpVelocity: 840,
   maxFallSpeed: 1200,
   airControl: 0.92,
-  fastFallGravityScale: 1.45,
 };
 
 export const COLORS = {
